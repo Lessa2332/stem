@@ -1,267 +1,1548 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Водяна Лінза | Еко-Детективи</title>
-    <style>
-        :root {
-            --primary: #0ea5e9;
-            --bg-dark: #0f172a;
-            --text-light: #f8fafc;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            height: 100dvh; /* For modern mobile browsers */
-        }
-        /* Header UI */
-        header {
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            padding: 15px;
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(10px);
-            text-align: center;
-            z-index: 10;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        header h1 { font-size: 1.2rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); }
-        header p { font-size: 0.85rem; opacity: 0.8; }
-        
-        /* Main Canvas Setup */
-        #simulator-container {
-            flex-grow: 1;
-            position: relative;
-            width: 100%;
-            height: 100%;
-        }
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        video { display: none; } /* Hidden video element for feed */
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#080d18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Детективний квест-симулятор: заломлення світла у водяній лінзі. НУШ, 5–6 клас.">
+<title>Справа про підмінені знаки — Лабораторія Еко-Детектива</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;padding:0}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:#080d18;color:#e8eefc;
+  overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid #4fd1c5;outline-offset:2px;border-radius:8px}
 
-        /* Controls UI */
-        .controls {
-            position: absolute;
-            bottom: 30px;
-            left: 0; right: 0;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            z-index: 10;
-            padding: 0 20px;
-        }
-        button {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 30px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        button:hover { background: rgba(255, 255, 255, 0.2); }
-        button.primary { background: var(--primary); border-color: var(--primary); }
-        button.primary:hover { background: #0284c7; }
+#app{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  height:100vh;height:100dvh;
+  background:
+    radial-gradient(1100px 760px at 15% -12%, #16305a 0%, transparent 62%),
+    radial-gradient(900px 700px at 112% 112%, #0d3b3a 0%, transparent 58%),
+    #080d18;
+}
 
-        /* Loader */
-        #loader {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.2rem;
-            z-index: 20;
-        }
-    </style>
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;
+  flex:0 0 auto;
+}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand-ico{
+  width:34px;height:34px;flex:0 0 auto;border-radius:11px;
+  display:grid;place-items:center;font-size:18px;
+  background:linear-gradient(145deg,#4fd1c5,#2b7fd4);
+  box-shadow:0 6px 18px rgba(79,209,197,.28);
+}
+.brand-txt{min-width:0}
+.brand-txt b{display:block;font-size:13px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-txt span{display:block;font-size:10.5px;color:#7d8aa5;letter-spacing:.05em}
+
+#main{position:relative;flex:1 1 auto;min-height:0}
+
+.screen{
+  position:absolute;inset:0;display:none;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  padding:4px 16px calc(24px + env(safe-area-inset-bottom));
+}
+.screen.is-active{display:block}
+.screen--lab{padding:0;overflow:hidden}
+
+.tabbar{
+  flex:0 0 auto;display:flex;gap:4px;
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom));
+  background:rgba(10,15,28,.88);
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 2px;border-radius:14px;
+  color:#7d8aa5;font-size:10.5px;font-weight:700;letter-spacing:.02em;
+  transition:color .18s, background .18s, transform .18s;
+}
+.tab .ico{font-size:19px;line-height:1;transition:transform .18s}
+.tab.is-active{color:#eaf2ff;background:rgba(79,209,197,.15)}
+.tab.is-active .ico{transform:translateY(-1px) scale(1.1)}
+
+.card{
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:20px;padding:16px;margin-bottom:14px;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.card h2{margin:0 0 8px;font-size:17px;letter-spacing:.01em}
+.card h3{margin:14px 0 6px;font-size:14px;color:#9fb3d1;letter-spacing:.03em;text-transform:uppercase}
+.card p{margin:0 0 10px;font-size:14.5px;line-height:1.6;color:#c8d4e8}
+.card p:last-child{margin-bottom:0}
+.muted{color:#7d8aa5;font-size:12.5px;line-height:1.55}
+
+.hero{
+  border-radius:24px;padding:22px 18px;margin:6px 0 14px;
+  background:linear-gradient(150deg,rgba(79,209,197,.20),rgba(43,127,212,.14) 55%,rgba(255,255,255,.04));
+  border:1px solid rgba(79,209,197,.28);
+  box-shadow:0 18px 44px -18px rgba(79,209,197,.5);
+}
+.hero .kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#6fe3d6;font-weight:800}
+.hero h1{margin:8px 0 10px;font-size:25px;line-height:1.18;letter-spacing:-.015em}
+.hero p{margin:0;font-size:14.5px;line-height:1.6;color:#cfe0f2}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 18px;border-radius:14px;font-weight:800;font-size:14px;
+  letter-spacing:.02em;transition:transform .12s, filter .18s, background .18s;
+  border:1px solid transparent;
+}
+.btn:active{transform:scale(.97)}
+.btn--primary{background:linear-gradient(145deg,#4fd1c5,#2b9fd4);color:#04121a;box-shadow:0 10px 24px -10px rgba(79,209,197,.9)}
+.btn--ghost{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.13);color:#dbe6f7}
+.btn--wide{width:100%}
+.btn--sm{padding:9px 13px;font-size:12.5px;border-radius:12px}
+
+.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{
+  position:relative;padding:10px 0 10px 42px;font-size:14px;line-height:1.5;
+  color:#c8d4e8;border-bottom:1px dashed rgba(255,255,255,.08);
+}
+.steps li:last-child{border-bottom:0}
+.steps li::before{
+  counter-increment:s;content:counter(s);
+  position:absolute;left:0;top:9px;width:28px;height:28px;border-radius:9px;
+  display:grid;place-items:center;font-size:13px;font-weight:800;color:#04121a;
+  background:linear-gradient(145deg,#4fd1c5,#2b9fd4);
+}
+
+#stage{
+  position:absolute;inset:0;width:100%;height:100%;display:block;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+}
+.lab-hud{
+  position:absolute;top:calc(env(safe-area-inset-top) + 10px);left:12px;
+  display:flex;gap:6px;flex-wrap:wrap;pointer-events:none;
+}
+.pill{
+  font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  padding:6px 11px;border-radius:999px;
+  background:rgba(8,13,24,.62);border:1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  color:#b9cbe4;
+}
+.pill.is-live{color:#7ef0dc;border-color:rgba(79,209,197,.5)}
+
+.verdict-card{
+  position:absolute;top:calc(env(safe-area-inset-top) + 10px);right:12px;
+  padding:8px 14px;border-radius:16px;text-align:right;pointer-events:none;
+  background:rgba(8,13,24,.62);border:1px solid rgba(255,255,255,.16);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  transition:border-color .3s, box-shadow .3s;
+}
+.verdict-label{display:block;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#7d8aa5;font-weight:700}
+.verdict-value{
+  display:block;font-size:19px;font-weight:900;letter-spacing:.03em;
+  transition:color .25s;
+}
+.verdict-card.is-upright .verdict-value{color:#7ef0dc}
+.verdict-card.is-flipped .verdict-value{color:#ffb35c}
+.verdict-card.is-neutral .verdict-value{color:#9fb3d1}
+.verdict-card.is-flipped{border-color:rgba(255,179,92,.6);box-shadow:0 0 0 3px rgba(255,179,92,.14)}
+@keyframes pulseFlip{0%{transform:scale(1)}40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.verdict-card.flash{animation:pulseFlip .45s ease}
+
+.hint{
+  position:absolute;left:50%;top:calc(env(safe-area-inset-top) + 62px);transform:translateX(-50%);
+  padding:8px 16px;border-radius:999px;white-space:nowrap;
+  font-size:12px;font-weight:600;color:#cfe0f2;
+  background:rgba(8,13,24,.7);border:1px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  transition:opacity .5s;pointer-events:none;
+}
+.hint.gone{opacity:0}
+
+.lab-panel{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(to top, rgba(6,10,20,.96) 42%, rgba(6,10,20,.72) 76%, transparent);
+  display:flex;flex-direction:column;gap:10px;
+}
+.seg{
+  display:flex;gap:4px;padding:4px;border-radius:14px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.10);
+}
+.seg-btn{
+  flex:1;padding:9px 8px;border-radius:10px;font-size:13px;font-weight:700;
+  color:#8fa2bd;transition:.18s;
+}
+.seg-btn.is-on{background:linear-gradient(145deg,#4fd1c5,#2b9fd4);color:#04121a;box-shadow:0 6px 16px -8px rgba(79,209,197,.9)}
+
+.slider-wrap{position:relative;padding:0 4px}
+.slider-labels{display:flex;justify-content:space-between;font-size:10.5px;color:#7d8aa5;font-weight:700;letter-spacing:.05em;margin-bottom:2px}
+.slider-track{position:relative}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:34px;background:transparent;display:block;margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{
+  height:9px;border-radius:999px;
+  background:linear-gradient(90deg,#2b9fd4 0%,#4fd1c5 34%,#f6c453 58%,#ff8a5c 76%,#ff6b6b 100%);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.5);
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:28px;height:28px;border-radius:50%;margin-top:-9.5px;
+  background:radial-gradient(circle at 34% 30%,#ffffff,#cfe6f5);
+  border:3px solid #0b1020;
+  box-shadow:0 4px 14px rgba(0,0,0,.6);
+}
+input[type=range]::-moz-range-track{
+  height:9px;border-radius:999px;
+  background:linear-gradient(90deg,#2b9fd4,#4fd1c5 34%,#f6c453 58%,#ff8a5c 76%,#ff6b6b);
+}
+input[type=range]::-moz-range-thumb{
+  width:24px;height:24px;border-radius:50%;border:3px solid #0b1020;
+  background:radial-gradient(circle at 34% 30%,#ffffff,#cfe6f5);
+  box-shadow:0 4px 14px rgba(0,0,0,.6);
+}
+.focus-mark{
+  position:absolute;top:-2px;transform:translateX(-50%);
+  font-size:9px;font-weight:900;letter-spacing:.08em;color:#ffd98a;
+  pointer-events:none;text-shadow:0 1px 4px rgba(0,0,0,.9);
+}
+.focus-mark::after{
+  content:'';display:block;width:2px;height:13px;margin:2px auto 0;
+  background:repeating-linear-gradient(to bottom,#ffd98a 0 3px,transparent 3px 6px);
+}
+.lab-actions{display:flex;gap:8px}
+.lab-actions .btn{flex:1;padding:11px 8px;font-size:12.5px}
+
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#7d8aa5;margin-bottom:6px}
+.field input{
+  width:100%;padding:12px 14px;border-radius:14px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);
+  color:#eaf2ff;font-size:15px;
+}
+.field input::placeholder{color:#5d6b85}
+
+.q{padding:14px 0;border-bottom:1px dashed rgba(255,255,255,.09)}
+.q:last-of-type{border-bottom:0}
+.q p{margin:0 0 10px;font-size:14px;font-weight:600;line-height:1.45;color:#dbe6f7}
+.opts{display:flex;flex-wrap:wrap;gap:7px}
+.opt{
+  padding:9px 13px;border-radius:12px;font-size:12.5px;font-weight:700;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  color:#a9bbd4;transition:.16s;
+}
+.opt:active{transform:scale(.96)}
+.opt.is-sel{
+  background:linear-gradient(145deg,#4fd1c5,#2b9fd4);color:#04121a;border-color:transparent;
+  box-shadow:0 8px 18px -10px rgba(79,209,197,.9);
+}
+.opt.is-hint{box-shadow:0 0 0 2px #f6c453 inset;color:#f6c453}
+
+.ray-svg{width:100%;height:auto;max-width:560px;display:block;margin:6px auto 10px;overflow:visible}
+.ray-line{
+  fill:none;stroke-width:3.5;stroke-linecap:round;
+  stroke-dasharray:9 7;
+  animation:flow 1.6s linear infinite;
+}
+@keyframes flow{to{stroke-dashoffset:-32}}
+@media (prefers-reduced-motion:reduce){
+  .ray-line{animation:none}
+  *{transition:none!important}
+}
+
+.verdict-grid{display:grid;gap:8px;margin:12px 0}
+.verdict-row{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:11px 14px;border-radius:14px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+}
+.verdict-row .k{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#7d8aa5;font-weight:800}
+.verdict-row .v{font-size:14px;font-weight:900;color:#7ef0dc;text-align:right}
+
+.reflect-btn{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  padding:13px 14px;border-radius:15px;margin-bottom:8px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);
+  font-size:13.5px;font-weight:600;color:#dbe6f7;transition:.16s;
+}
+.reflect-btn:active{transform:scale(.98)}
+.reflect-btn.is-sel{border-color:rgba(79,209,197,.7);background:rgba(79,209,197,.14)}
+.reflect-btn .dot{width:16px;height:16px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+.reflect-msg{
+  margin-top:6px;padding:13px 15px;border-radius:15px;font-size:13.5px;line-height:1.55;
+  background:rgba(79,209,197,.10);border:1px solid rgba(79,209,197,.28);color:#cfe0f2;
+  display:none;
+}
+.reflect-msg.show{display:block}
+
+.badge{
+  text-align:center;padding:22px 18px;border-radius:22px;margin:6px 0 14px;
+  background:linear-gradient(150deg,rgba(246,196,83,.18),rgba(79,209,197,.12));
+  border:1px solid rgba(246,196,83,.35);
+}
+.badge .stamp{
+  display:inline-block;padding:9px 18px;border-radius:12px;margin-bottom:10px;
+  border:2.5px solid #f6c453;color:#f6c453;
+  font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;
+  transform:rotate(-3deg);
+}
+.badge h2{margin:0 0 6px;font-size:20px}
+.badge p{margin:0;font-size:13px;color:#c8d4e8}
+
+.warmup{
+  margin-top:12px;padding:18px;border-radius:18px;text-align:center;
+  background:rgba(43,127,212,.12);border:1px solid rgba(43,127,212,.32);
+  min-height:118px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+}
+.warmup .emoji{font-size:40px;line-height:1;animation:pop .45s ease}
+@keyframes pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.14)}100%{transform:scale(1);opacity:1}}
+.warmup .cue{font-size:16px;font-weight:800;color:#eaf2ff}
+.warmup .sub{font-size:12.5px;color:#9fb3d1}
+
+#toast{
+  position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));
+  transform:translate(-50%,16px);
+  padding:12px 20px;border-radius:14px;max-width:88vw;text-align:center;
+  background:rgba(16,24,42,.96);border:1px solid rgba(79,209,197,.4);
+  color:#eaf2ff;font-size:13.5px;font-weight:600;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:0 18px 40px -14px rgba(0,0,0,.9);
+  opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:100;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
 </head>
 <body>
+<div id="app">
 
-    <header>
-        <h1>Слідчий апарат: Водяна Лінза</h1>
-        <p>Наведіть камеру на стрілку так, щоб вона опинилася всередині склянки</p>
-    </header>
-
-    <div id="simulator-container">
-        <div id="loader">Запуск камери...</div>
-        <canvas id="lensCanvas"></canvas>
-        <video id="videoElement" autoplay playsinline></video>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-ico">🕵️</div>
+      <div class="brand-txt">
+        <b>Еко-Детектив</b>
+        <span>Головне управління · справа №1</span>
+      </div>
     </div>
+  </header>
 
-    <div class="controls">
-        <button id="switchBtn">🔄 Змінити камеру</button>
-        <button id="captureBtn" class="primary">📸 Доказ</button>
-    </div>
+  <main id="main">
 
-    <script>
-        const video = document.getElementById('videoElement');
-        const canvas = document.getElementById('lensCanvas');
-        const ctx = canvas.getContext('2d');
-        const switchBtn = document.getElementById('switchBtn');
-        const captureBtn = document.getElementById('captureBtn');
-        const loader = document.getElementById('loader');
+    <section class="screen is-active" data-screen="start">
+      <div class="hero">
+        <div class="kicker">Терміновий виклик</div>
+        <h1>Справа про підмінені знаки</h1>
+        <p>У місті завівся жартівник, який зламав усі вказівники. Кур'єри їдуть не туди, туристи губляться. На місці злочину — лише склянка води. Твоє завдання: провести слідчий експеримент і з'ясувати, <b>як злочинець перевертає знаки</b>.</p>
+      </div>
 
-        let currentStream = null;
-        let useFrontCamera = false;
+      <div class="card">
+        <h2>📋 План слідства</h2>
+        <ol class="steps">
+          <li>Намалюй на папері велику товсту стрілку, що вказує <b>праворуч</b>. Це речовий доказ.</li>
+          <li>Приклади <b>порожню</b> склянку. Подивись крізь неї. Щось змінилося?</li>
+          <li>Налий <b>воду</b> майже до країв і подивись крізь неї на стрілку.</li>
+          <li>Повільно віддаляй і присувай папір — знайди <b>точку перевороту</b>.</li>
+          <li>Заповни «Паспорт Детектива» і винеси офіційний вирок.</li>
+        </ol>
+      </div>
 
-        // Initialize Camera
-        async function startCamera() {
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
+      <div class="card">
+        <h2>🏃‍♂️ Детективна фізкультхвилинка</h2>
+        <p class="muted">Розімни слідчі м'язи — зрозумій, як рухається світло.</p>
+        <div class="warmup" id="warmup">
+          <div class="emoji">🔍</div>
+          <div class="cue">Готовий до розминки?</div>
+          <div class="sub">Натисни «Почати» — і повторюй рухи за екраном</div>
+        </div>
+        <button class="btn btn--primary btn--wide" id="btnWarmup" style="margin-top:12px">▶️ Почати розминку</button>
+      </div>
 
-            const constraints = {
-                video: {
-                    facingMode: useFrontCamera ? "user" : "environment",
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                }
-            };
+      <div class="card">
+        <h2>🧰 Що знадобиться на парті</h2>
+        <p class="muted">Циліндрична прозора склянка <b>без граней</b> · вода · аркуш паперу · яскравий маркер · цей пристрій.</p>
+        <p class="muted">⚠️ Скло — не іграшка. Працюй обережно, воду не розливай.</p>
+      </div>
 
-            try {
-                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = currentStream;
-                video.onloadedmetadata = () => {
-                    video.play();
-                    loader.style.display = 'none';
-                    requestAnimationFrame(drawSimulator);
-                };
-            } catch (err) {
-                console.error("Помилка доступу до камери:", err);
-                loader.innerHTML = "⚠️ Надайте дозвіл на використання камери";
-            }
-        }
+      <button class="btn btn--primary btn--wide" data-go="lab" style="margin-bottom:20px">🔬 Відкрити лабораторію</button>
+    </section>
 
-        // Main Render Loop
-        function drawSimulator() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                // Set canvas size to match screen
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
+    <section class="screen screen--lab" data-screen="lab">
+      <canvas id="stage" aria-label="Симулятор водяної лінзи"></canvas>
 
-                // 1. Calculate aspect ratio to "cover" the screen (like object-fit: cover)
-                const scale = Math.max(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
-                const vidWidth = video.videoWidth * scale;
-                const vidHeight = video.videoHeight * scale;
-                const vidX = (canvas.width - vidWidth) / 2;
-                const vidY = (canvas.height - vidHeight) / 2;
+      <div class="lab-hud">
+        <div class="pill" id="pillSource">ДЕМО-СЦЕНА</div>
+        <div class="pill is-live" id="pillWater">ВОДА</div>
+      </div>
 
-                // 2. Draw normal background (blurry/darkened slightly to emphasize the glass)
-                ctx.globalAlpha = 0.6;
-                // If using front camera, mirror the background for natural feel
-                if (useFrontCamera) {
-                    ctx.save();
-                    ctx.translate(canvas.width, 0);
-                    ctx.scale(-1, 1);
-                    ctx.drawImage(video, canvas.width - vidX - vidWidth, vidY, vidWidth, vidHeight);
-                    ctx.restore();
-                } else {
-                    ctx.drawImage(video, vidX, vidY, vidWidth, vidHeight);
-                }
-                ctx.globalAlpha = 1.0;
+      <div class="verdict-card is-flipped" id="readout">
+        <span class="verdict-label">Стрілка вказує</span>
+        <span class="verdict-value" id="readoutValue">ЛІВОРУЧ</span>
+      </div>
 
-                // 3. Define the "Glass of Water" dimensions
-                const glassWidth = Math.min(canvas.width * 0.45, 300);
-                const glassHeight = Math.min(canvas.height * 0.6, 500);
-                const glassX = (canvas.width - glassWidth) / 2;
-                const glassY = (canvas.height - glassHeight) / 2;
-                const cornerRadius = 15;
+      <div class="hint" id="hint">Перетягни склянку по екрану · двома пальцями — розмір</div>
 
-                // 4. Create Clipping Path for the Glass
-                ctx.save();
-                ctx.beginPath();
-                ctx.roundRect(glassX, glassY, glassWidth, glassHeight, cornerRadius);
-                ctx.clip();
+      <div class="lab-panel">
+        <div class="seg" role="group" aria-label="Стан склянки">
+          <button class="seg-btn" data-water="0">Порожня склянка</button>
+          <button class="seg-btn is-on" data-water="1">З водою</button>
+        </div>
 
-                // 5. Draw the FLIPPED video inside the glass (The Physics Magic)
-                // Water acts as a convex lens, flipping the image horizontally
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-                
-                // Calculate correct X position for flipped coordinate system
-                const flippedVidX = canvas.width - vidX - vidWidth;
-                
-                // If front camera is used, double flip makes it normal, so we just draw normal inside the glass
-                // To keep the "experiment" working, front camera background is mirrored, glass is unmirrored.
-                if(useFrontCamera) {
-                    ctx.scale(-1, 1);
-                    ctx.translate(-canvas.width, 0);
-                    ctx.drawImage(video, vidX, vidY, vidWidth, vidHeight);
-                } else {
-                    ctx.drawImage(video, flippedVidX, vidY, vidWidth, vidHeight);
-                }
-                
-                // Add water tint
-                ctx.fillStyle = 'rgba(14, 165, 233, 0.15)'; // Cyan tint
-                ctx.fill();
-                ctx.restore();
+        <div class="slider-wrap">
+          <div class="slider-labels"><span>◀ Біля знака</span><span>Далеко ▶</span></div>
+          <div class="slider-track">
+            <input type="range" id="dist" min="0" max="1" step="0.004" value="0.8" aria-label="Відстань склянки від знака">
+            <div class="focus-mark" style="left:calc(14px + (100% - 28px) * 0.585)">ФОКУС</div>
+          </div>
+        </div>
 
-                // 6. Draw Glass UI (Borders and glare)
-                ctx.beginPath();
-                ctx.roundRect(glassX, glassY, glassWidth, glassHeight, cornerRadius);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.lineWidth = 3;
-                ctx.stroke();
+        <div class="lab-actions">
+          <button class="btn btn--ghost" id="btnSource">📷 Камера</button>
+          <button class="btn btn--ghost" id="btnShot">📸 Знімок</button>
+          <button class="btn btn--primary" id="btnSaveObs">✅ У паспорт</button>
+        </div>
+      </div>
+    </section>
 
-                // Left Glare
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.fillRect(glassX + 10, glassY + 20, 4, glassHeight - 40);
-                // Right Glare
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-                ctx.fillRect(glassX + glassWidth - 15, glassY + 20, 2, glassHeight - 40);
-            }
-            requestAnimationFrame(drawSimulator);
-        }
+    <section class="screen" data-screen="passport">
+      <div class="hero" style="padding:18px">
+        <div class="kicker">Документ слідчого</div>
+        <h1 style="font-size:21px;margin-bottom:4px">Паспорт Детектива</h1>
+        <p style="font-size:13px">Заповнюй під час слідства. Дані зберігаються на пристрої.</p>
+      </div>
 
-        // Event Listeners
-        switchBtn.addEventListener('click', () => {
-            useFrontCamera = !useFrontCamera;
-            startCamera();
-        });
+      <div class="card">
+        <div class="field">
+          <label for="p_name">Детектив</label>
+          <input id="p_name" placeholder="Ім'я та прізвище" autocomplete="name">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="p_partner">Напарник / відділ</label>
+          <input id="p_partner" placeholder="Ім'я напарника або № відділу">
+        </div>
+      </div>
 
-        captureBtn.addEventListener('click', () => {
-            // Flash effect
-            const flash = document.createElement('div');
-            flash.style.position = 'absolute';
-            flash.style.top = '0'; flash.style.left = '0';
-            flash.style.width = '100%'; flash.style.height = '100%';
-            flash.style.background = 'white';
-            flash.style.zIndex = '100';
-            flash.style.transition = 'opacity 0.5s';
-            document.body.appendChild(flash);
-            
-            setTimeout(() => { flash.style.opacity = '0'; }, 100);
-            setTimeout(() => { document.body.removeChild(flash); }, 600);
+      <div class="card">
+        <h2>🔎 Протокол слідчих дій</h2>
 
-            // Download Image
-            const link = document.createElement('a');
-            link.download = 'Доказ_Водяна_Лінза.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
+        <div class="q">
+          <p>1. Оригінальний доказ (стрілка на папері) вказує…</p>
+          <div class="opts">
+            <button class="opt" data-q="q1" data-v="right">ПРАВОРУЧ</button>
+            <button class="opt" data-q="q1" data-v="left">ЛІВОРУЧ</button>
+          </div>
+        </div>
 
-        // Start
-        window.addEventListener('load', startCamera);
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-    </script>
+        <div class="q">
+          <p>2. Чи змінює <b>порожня</b> склянка напрямок стрілки?</p>
+          <div class="opts">
+            <button class="opt" data-q="q2" data-v="no">НІ</button>
+            <button class="opt" data-q="q2" data-v="yes">ТАК</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <p>3. Крізь <b>воду</b> стрілка вказує…</p>
+          <div class="opts">
+            <button class="opt" data-q="q3" data-v="left">ЛІВОРУЧ</button>
+            <button class="opt" data-q="q3" data-v="right">ПРАВОРУЧ</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <p>4. Стрілка перевертається лише на певній…</p>
+          <div class="opts">
+            <button class="opt" data-q="q4" data-v="distance">ВІДСТАНІ</button>
+            <button class="opt" data-q="q4" data-v="speed">ШВИДКОСТІ</button>
+            <button class="opt" data-q="q4" data-v="color">КОЛЬОРІ</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <p>5. Злочинець (явище) — це…</p>
+          <div class="opts">
+            <button class="opt" data-q="q5" data-v="refraction">ЗАЛОМЛЕННЯ СВІТЛА</button>
+            <button class="opt" data-q="q5" data-v="reflection">ВІДБИТТЯ СВІТЛА</button>
+            <button class="opt" data-q="q5" data-v="absorption">ПОГЛИНАННЯ СВІТЛА</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <p>6. Знаряддя злочину — це…</p>
+          <div class="opts">
+            <button class="opt" data-q="q6" data-v="lens">ВОДЯНА (ОПУКЛА) ЛІНЗА</button>
+            <button class="opt" data-q="q6" data-v="mirror">ПЛОСКЕ ДЗЕРКАЛО</button>
+            <button class="opt" data-q="q6" data-v="prism">ПРИЗМА</button>
+          </div>
+        </div>
+
+        <div class="q">
+          <p>7. Механізм — це…</p>
+          <div class="opts">
+            <button class="opt" data-q="q7" data-v="cross">ПЕРЕХРЕЩЕННЯ ПРОМЕНІВ У ФОКУСІ</button>
+            <button class="opt" data-q="q7" data-v="scatter">РОЗСІЮВАННЯ ПРОМЕНІВ</button>
+            <button class="opt" data-q="q7" data-v="tint">ЗАБАРВЛЕННЯ СВІТЛА</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+        <button class="btn btn--ghost btn--sm" id="btnAutofill">🧪 Заповнити з лабораторії</button>
+        <button class="btn btn--ghost btn--sm" id="btnHint">💡 Підказка</button>
+        <button class="btn btn--ghost btn--sm" id="btnExport">⬇️ Експорт</button>
+        <button class="btn btn--ghost btn--sm" id="btnReset">🗑️ Очистити</button>
+      </div>
+    </section>
+
+    <section class="screen" data-screen="verdict">
+      <div class="badge" id="badge">
+        <div class="stamp">Старший слідчий</div>
+        <h2 id="badgeName">Справу розкрито!</h2>
+        <p id="badgeSub">Ти навчився керувати світлом за допомогою води та скла.</p>
+      </div>
+
+      <div class="card">
+        <h2>⚖️ Офіційний вирок</h2>
+        <div class="verdict-grid">
+          <div class="verdict-row"><span class="k">Злочинець</span><span class="v">ЗАЛОМЛЕННЯ СВІТЛА</span></div>
+          <div class="verdict-row"><span class="k">Знаряддя</span><span class="v">ВОДЯНА ЛІНЗА (ОПУКЛА)</span></div>
+          <div class="verdict-row"><span class="k">Механізм</span><span class="v">ПЕРЕХРЕЩЕННЯ ПРОМЕНІВ У ФОКУСІ</span></div>
+        </div>
+
+        <svg class="ray-svg" viewBox="0 0 640 340" role="img" aria-label="Схема: промені світла заломлюються у водяній лінзі та перехрещуються у фокусі">
+          <defs>
+            <linearGradient id="lensGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#8fe3ff" stop-opacity=".38"/>
+              <stop offset="1" stop-color="#3aa0ff" stop-opacity=".16"/>
+            </linearGradient>
+            <marker id="ahGold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#f6c453"/>
+            </marker>
+            <marker id="ahTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#4fd1c5"/>
+            </marker>
+          </defs>
+
+          <line x1="20" y1="170" x2="620" y2="170" stroke="rgba(255,255,255,.16)" stroke-width="1.5" stroke-dasharray="6 7"/>
+
+          <circle cx="320" cy="170" r="78" fill="url(#lensGrad)" stroke="rgba(150,220,255,.65)" stroke-width="3"/>
+          <circle cx="320" cy="170" r="78" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1"/>
+          <text x="320" y="286" text-anchor="middle" fill="#8fb6da" font-size="15" font-weight="700" font-family="system-ui,sans-serif">ВОДЯНА ЛІНЗА</text>
+
+          <path class="ray-line" d="M 40 100 H 320 L 470 170 L 612 248" stroke="#7ef0dc"/>
+          <path class="ray-line" d="M 40 240 H 320 L 470 170 L 612 92" stroke="#7ef0dc"/>
+
+          <circle cx="470" cy="170" r="7" fill="#f6c453"/>
+          <circle cx="470" cy="170" r="14" fill="none" stroke="#f6c453" stroke-opacity=".45" stroke-width="2"/>
+          <text x="470" y="205" text-anchor="middle" fill="#f6c453" font-size="14" font-weight="800" font-family="system-ui,sans-serif">ФОКУС</text>
+
+          <line x1="66" y1="170" x2="176" y2="170" stroke="#f6c453" stroke-width="10" stroke-linecap="round" marker-end="url(#ahGold)"/>
+          <text x="118" y="142" text-anchor="middle" fill="#f6c453" font-size="15" font-weight="800" font-family="system-ui,sans-serif">ОБ'ЄКТ</text>
+
+          <line x1="592" y1="170" x2="512" y2="170" stroke="#4fd1c5" stroke-width="10" stroke-linecap="round" marker-end="url(#ahTeal)"/>
+          <text x="560" y="142" text-anchor="middle" fill="#4fd1c5" font-size="15" font-weight="800" font-family="system-ui,sans-serif">ЗОБРАЖЕННЯ</text>
+        </svg>
+
+        <h3>Що сталося насправді</h3>
+        <p>Вода у круглій склянці — це <b>опукла лінза</b>. Вона збирає промені світла всередину. Промені зустрічаються в одній точці — <b>у фокусі</b> — перехрещуються й летять далі. Тому те, що було праворуч, стає ліворуч. Саме так «злочинник» і підмінює знаки!</p>
+        <p class="muted">Якщо папір притиснути до скла — перевороту немає. Варто відсунути його далі фокуса — і стрілка миттєво розвертається.</p>
+      </div>
+
+      <div class="card">
+        <h2>🔦 Рефлексія «Детективний ліхтарик»</h2>
+        <p class="muted">Увімкни свій ліхтарик — покажи, як пройшло розслідування.</p>
+        <button class="reflect-btn" data-c="green"><span class="dot" style="background:#22c55e"></span>Справа ясна! Я все зрозумів(ла) і можу пояснити іншим.</button>
+        <button class="reflect-btn" data-c="yellow"><span class="dot" style="background:#f6c453"></span>Є підозри. Було цікаво, але фізика фокуса ще не до кінця ясна.</button>
+        <button class="reflect-btn" data-c="red"><span class="dot" style="background:#ff6b6b"></span>Глухий кут. Я заплутався й потребую допомоги напарника.</button>
+        <div class="reflect-msg" id="reflectMsg"></div>
+      </div>
+
+      <button class="btn btn--primary btn--wide" data-go="lab" style="margin-bottom:20px">🔬 Повернутися до лабораторії</button>
+    </section>
+
+  </main>
+
+  <nav class="tabbar" role="tablist">
+    <button class="tab is-active" data-tab="start" role="tab"><span class="ico">🕵️</span>Старт</button>
+    <button class="tab" data-tab="lab" role="tab"><span class="ico">🔬</span>Лабораторія</button>
+    <button class="tab" data-tab="passport" role="tab"><span class="ico">📋</span>Паспорт</button>
+    <button class="tab" data-tab="verdict" role="tab"><span class="ico">⚖️</span>Вирок</button>
+  </nav>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:24px;color:#fff">Для роботи симулятора потрібно увімкнути JavaScript.</p></noscript>
+
+<script>
+(function(){
+"use strict";
+
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+
+let toastTimer = null;
+function toast(msg){
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+function roundRect(c, x, y, w, h, r){
+  r = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y,     x + w, y + h, r);
+  c.arcTo(x + w, y + h, x,     y + h, r);
+  c.arcTo(x,     y + h, x,     y,     r);
+  c.arcTo(x,     y,     x + w, y,     r);
+  c.closePath();
+}
+
+const LS = {
+  get(k, def){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : def; }catch(e){ return def; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+
+const SCREENS = ["start", "lab", "passport", "verdict"];
+
+function switchTab(name){
+  if (SCREENS.indexOf(name) < 0) name = "start";
+  $$(".screen").forEach(s => s.classList.toggle("is-active", s.dataset.screen === name));
+  $$(".tab").forEach(t => t.classList.toggle("is-active", t.dataset.tab === name));
+  setLabActive(name === "lab");
+  if (name === "lab") requestAnimationFrame(resizeStage);
+  if (name === "verdict") refreshBadge();
+  if (location.hash.slice(1) !== name) history.replaceState(null, "", "#" + name);
+}
+
+$$(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+$$("[data-go]").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.go)));
+window.addEventListener("hashchange", () => switchTab(location.hash.slice(1) || "start"));
+
+/* ============================================================
+   ЛАБОРАТОРІЯ
+   ============================================================ */
+const stage = $("#stage");
+const ctx   = stage.getContext("2d", { alpha: false });
+
+const GLASS_RATIO = 1.9;
+const FOCAL = 3.0;
+
+/* Ключові значення: */
+const DIST_BEFORE = 0.15;   // повзунок до фокуса — стрілка пряма
+const DIST_AFTER  = 0.80;   // повзунок після фокуса — стрілка перевернута
+
+const state = {
+  water: true,
+  dist: DIST_AFTER,
+  source: "demo",
+  glass: { x: 0, y: 0, w: 0, h: 0 }
+};
+
+let W = 0, H = 0, DPR = 1;
+let labActive = false, rafId = 0;
+let glassInit = false;
+let demoSrc = null;
+
+let video = null, cameraStream = null, cameraReady = false, cameraStarting = false;
+
+function glassPath(c, g){
+  const cx = g.x + g.w / 2;
+  const topY = g.y, botY = g.y + g.h;
+  const tw = g.w * 0.50;
+  const bw = g.w * 0.42;
+  const rb = Math.min(g.w * 0.20, g.h * 0.10);
+  const rl = Math.min(9, g.w * 0.10);
+
+  c.beginPath();
+  c.moveTo(cx - tw, topY + rl);
+  c.quadraticCurveTo(cx - tw, topY, cx - tw + rl, topY);
+  c.lineTo(cx + tw - rl, topY);
+  c.quadraticCurveTo(cx + tw, topY, cx + tw, topY + rl);
+  c.lineTo(cx + bw, botY - rb);
+  c.quadraticCurveTo(cx + bw, botY, cx + bw - rb, botY);
+  c.lineTo(cx - bw + rb, botY);
+  c.quadraticCurveTo(cx - bw, botY, cx - bw, botY - rb);
+  c.closePath();
+}
+
+function initGlass(){
+  const h = Math.min(H * 0.60, W * 1.55);
+  const w = h / GLASS_RATIO;
+  state.glass = { x: (W - w) / 2, y: (H - h) / 2 - H * 0.04, w: w, h: h };
+}
+
+function clampGlass(){
+  const g = state.glass;
+  const m = 44;
+  g.x = clamp(g.x, -g.w + m, W - m);
+  g.y = clamp(g.y, -g.h + m, H - m);
+}
+
+function setGlassSize(nw, nh){
+  const g = state.glass;
+  const cx = g.x + g.w / 2, cy = g.y + g.h / 2;
+  let h = clamp(nh, 120, H * 1.25);
+  let w = h / GLASS_RATIO;
+  if (w > W * 0.92){ w = W * 0.92; h = w * GLASS_RATIO; }
+  g.w = w; g.h = h;
+  g.x = cx - w / 2; g.y = cy - h / 2;
+  clampGlass();
+}
+
+function sliderToDistance(t){ return 0.6 * Math.pow(15.667, t); }
+
+function computeM(){
+  if (!state.water) return 1;
+  const d = sliderToDistance(state.dist);
+  let m;
+  if (d < FOCAL - 1e-4)       m =  FOCAL / (FOCAL - d);
+  else if (d > FOCAL + 1e-4)  m = -FOCAL / (d - FOCAL);
+  else                        m = 999;
+  const sign = m < 0 ? -1 : 1;
+  const mag = clamp(Math.abs(m), 0.55, 3.2);
+  return sign * mag;
+}
+
+/* ============================================================
+   ДЕМО-СЦЕНА
+   ============================================================ */
+function drawArrowPath(c, cx, cy, len, thick, dir){
+  const headLen = len * 0.34;
+  const headW   = thick * 2.7;
+  c.beginPath();
+  c.moveTo(cx - len / 2 * dir, cy - thick / 2);
+  c.lineTo(cx + (len / 2 - headLen) * dir, cy - thick / 2);
+  c.lineTo(cx + (len / 2 - headLen) * dir, cy - headW / 2);
+  c.lineTo(cx + len / 2 * dir, cy);
+  c.lineTo(cx + (len / 2 - headLen) * dir, cy + headW / 2);
+  c.lineTo(cx + (len / 2 - headLen) * dir, cy + thick / 2);
+  c.lineTo(cx - len / 2 * dir, cy + thick / 2);
+  c.closePath();
+  c.fill();
+}
+
+function drawDemoScene(c, w, h){
+  const bg = c.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0,   "#3b2b20");
+  bg.addColorStop(0.5, "#291d15");
+  bg.addColorStop(1,   "#150e09");
+  c.fillStyle = bg;
+  c.fillRect(0, 0, w, h);
+
+  c.save();
+  c.globalAlpha = 0.05;
+  c.strokeStyle = "#ffffff";
+  c.lineWidth = 1.4;
+  for (let i = 0; i < 18; i++){
+    const y = (i / 18) * h;
+    c.beginPath();
+    c.moveTo(0, y);
+    c.bezierCurveTo(w * 0.3, y + 7, w * 0.6, y - 7, w, y + 3);
+    c.stroke();
+  }
+  c.restore();
+
+  const pw = Math.min(w * 0.88, h * 0.84);
+  const ph = pw * 0.76;
+  const px = (w - pw) / 2;
+  const py = (h - ph) / 2;
+
+  c.save();
+  c.translate(w / 2, h / 2);
+  c.rotate(-0.025);
+  c.translate(-w / 2, -h / 2);
+
+  c.shadowColor   = "rgba(0,0,0,.7)";
+  c.shadowBlur    = Math.max(16, pw * 0.05);
+  c.shadowOffsetY = 10;
+  c.fillStyle = "#f8f4ea";
+  roundRect(c, px, py, pw, ph, pw * 0.022);
+  c.fill();
+  c.shadowColor = "transparent";
+  c.shadowBlur = 0;
+  c.shadowOffsetY = 0;
+
+  c.strokeStyle = "rgba(80,115,165,.13)";
+  c.lineWidth = 1;
+  const step = pw / 16;
+  for (let x = px + step; x < px + pw - 1; x += step){
+    c.beginPath(); c.moveTo(x, py + 4); c.lineTo(x, py + ph - 4); c.stroke();
+  }
+  for (let y = py + step; y < py + ph - 1; y += step){
+    c.beginPath(); c.moveTo(px + 4, y); c.lineTo(px + pw - 4, y); c.stroke();
+  }
+
+  c.fillStyle = "#1b2a44";
+  c.textAlign = "left";
+  c.textBaseline = "top";
+  c.font = "800 " + (pw * 0.058) + "px system-ui,-apple-system,sans-serif";
+  c.fillText("СПРАВА №1  •  ДОКАЗ", px + pw * 0.07, py + ph * 0.075);
+
+  c.fillStyle = "#101820";
+  drawArrowPath(c, px + pw * 0.5, py + ph * 0.44, pw * 0.66, ph * 0.075, 1);
+
+  c.textAlign = "center";
+  c.textBaseline = "middle";
+  c.fillStyle = "#101820";
+  c.font = "900 " + (pw * 0.105) + "px system-ui,-apple-system,sans-serif";
+  c.fillText("СЛІД", px + pw * 0.5, py + ph * 0.72);
+
+  c.fillStyle = "rgba(27,42,68,.6)";
+  c.font = "600 " + (pw * 0.040) + "px system-ui,-apple-system,sans-serif";
+  c.fillText("напрямок руху кур'єра", px + pw * 0.5, py + ph * 0.86);
+
+  c.restore();
+}
+
+function buildDemoScene(){
+  if (W < 4 || H < 4) return;
+  demoSrc = document.createElement("canvas");
+  demoSrc.width  = stage.width;
+  demoSrc.height = stage.height;
+  const c = demoSrc.getContext("2d");
+  c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  drawDemoScene(c, W, H);
+}
+
+function drawSource(c){
+  if (state.source === "camera" && cameraReady && video && video.readyState >= 2 && video.videoWidth){
+    const iw = video.videoWidth, ih = video.videoHeight;
+    const s = Math.max(W / iw, H / ih);
+    const dw = iw * s, dh = ih * s;
+    c.drawImage(video, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    return true;
+  }
+  if (demoSrc){
+    c.drawImage(demoSrc, 0, 0, W, H);
+    return true;
+  }
+  return false;
+}
+
+function drawGlassLens(m){
+  const g = state.glass;
+  const cx = g.x + g.w / 2;
+  const cy = g.y + g.h / 2;
+
+  ctx.save();
+  ctx.globalAlpha = 0.45;
+  const sh = ctx.createRadialGradient(cx, g.y + g.h, g.w * 0.1, cx, g.y + g.h, g.w * 0.9);
+  sh.addColorStop(0, "rgba(0,0,0,.55)");
+  sh.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = sh;
+  ctx.beginPath();
+  ctx.ellipse(cx, g.y + g.h + g.h * 0.03, g.w * 0.85, g.h * 0.09, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  glassPath(ctx, g);
+  ctx.clip();
+
+  if (state.water || Math.abs(m - 1) > 0.001){
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(m, 1);
+    ctx.translate(-cx, -cy);
+    drawSource(ctx);
+    ctx.restore();
+  }
+
+  if (state.water){
+    const wg = ctx.createLinearGradient(0, g.y, 0, g.y + g.h);
+    wg.addColorStop(0,   "rgba(150,225,255,.13)");
+    wg.addColorStop(0.6, "rgba(90,180,245,.09)");
+    wg.addColorStop(1,   "rgba(40,110,200,.20)");
+    ctx.fillStyle = wg;
+    ctx.fill();
+
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = "rgba(200,240,255,.75)";
+    ctx.lineWidth = Math.max(1.5, g.w * 0.018);
+    ctx.beginPath();
+    ctx.moveTo(cx - g.w * 0.5, g.y + g.h * 0.06);
+    ctx.lineTo(cx + g.w * 0.5, g.y + g.h * 0.06);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  const eg = ctx.createLinearGradient(g.x, 0, g.x + g.w, 0);
+  eg.addColorStop(0,    "rgba(0,10,25,.42)");
+  eg.addColorStop(0.14, "rgba(0,10,25,0)");
+  eg.addColorStop(0.86, "rgba(0,10,25,0)");
+  eg.addColorStop(1,    "rgba(0,10,25,.42)");
+  ctx.fillStyle = eg;
+  ctx.fill();
+
+  const h1 = ctx.createLinearGradient(g.x + g.w * 0.06, 0, g.x + g.w * 0.32, 0);
+  h1.addColorStop(0,   "rgba(255,255,255,0)");
+  h1.addColorStop(0.5, "rgba(255,255,255,.32)");
+  h1.addColorStop(1,   "rgba(255,255,255,0)");
+  ctx.fillStyle = h1;
+  ctx.fillRect(g.x, g.y, g.w * 0.36, g.h);
+
+  const h2 = ctx.createLinearGradient(g.x + g.w * 0.76, 0, g.x + g.w * 0.94, 0);
+  h2.addColorStop(0,   "rgba(255,255,255,0)");
+  h2.addColorStop(0.5, "rgba(255,255,255,.20)");
+  h2.addColorStop(1,   "rgba(255,255,255,0)");
+  ctx.fillStyle = h2;
+  ctx.fillRect(g.x + g.w * 0.72, g.y, g.w * 0.26, g.h);
+
+  ctx.restore();
+
+  glassPath(ctx, g);
+  ctx.lineWidth   = Math.max(2, g.w * 0.030);
+  ctx.strokeStyle = "rgba(215,242,255,.80)";
+  ctx.stroke();
+  ctx.lineWidth   = Math.max(1, g.w * 0.010);
+  ctx.strokeStyle = "rgba(255,255,255,.35)";
+  ctx.stroke();
+}
+
+let uiCache = "";
+let lastSign = -1;
+
+function syncReadout(m){
+  const card = $("#readout");
+  const val  = $("#readoutValue");
+  const pillW = $("#pillWater");
+
+  let txt, cls;
+  if (!state.water){ txt = "ПРАВОРУЧ"; cls = "is-neutral"; }
+  else if (m > 0){   txt = "ПРАВОРУЧ"; cls = "is-upright"; }
+  else {             txt = "ЛІВОРУЧ";  cls = "is-flipped"; }
+
+  const key = txt + "|" + cls + "|" + state.water;
+  if (key === uiCache) return;
+  uiCache = key;
+
+  val.textContent = txt;
+  card.classList.remove("is-upright", "is-flipped", "is-neutral");
+  card.classList.add(cls);
+  pillW.textContent = state.water ? "ВОДА" : "ПОРОЖНЯ";
+  pillW.classList.toggle("is-live", state.water);
+}
+
+function flashFlip(){
+  const card = $("#readout");
+  card.classList.remove("flash");
+  void card.offsetWidth;
+  card.classList.add("flash");
+  if (navigator.vibrate) { try { navigator.vibrate(55); } catch(e){} }
+}
+
+function frame(){
+  rafId = requestAnimationFrame(frame);
+  if (!labActive || W < 4 || H < 4) return;
+
+  const m = computeM();
+  syncReadout(m);
+
+  if (state.water && Math.sign(m) !== lastSign){
+    lastSign = Math.sign(m);
+    flashFlip();
+  }
+
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = "#05080f";
+  ctx.fillRect(0, 0, W, H);
+  drawSource(ctx);
+  drawGlassLens(m);
+}
+
+function startLoop(){
+  if (!rafId) rafId = requestAnimationFrame(frame);
+}
+function stopLoop(){
+  if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+}
+
+function resizeStage(){
+  if (!labActive) return;
+  const r = stage.getBoundingClientRect();
+  if (r.width < 4 || r.height < 4) return;
+
+  W = r.width;
+  H = r.height;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  stage.width  = Math.round(W * DPR);
+  stage.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  buildDemoScene();
+
+  if (!glassInit){ initGlass(); glassInit = true; }
+  else {
+    const g = state.glass;
+    setGlassSize(g.w, g.h);
+  }
+  clampGlass();
+}
+
+function setLabActive(on){
+  if (labActive === on) return;
+  labActive = on;
+  if (on){
+    startLoop();
+    requestAnimationFrame(resizeStage);
+    if (state.source === "camera" && !cameraReady) startCamera();
+  } else {
+    stopLoop();
+  }
+}
+
+window.addEventListener("resize", () => { if (labActive) resizeStage(); });
+window.addEventListener("orientationchange", () => {
+  setTimeout(() => { if (labActive) resizeStage(); }, 260);
+});
+if (window.ResizeObserver){
+  new ResizeObserver(() => { if (labActive) resizeStage(); }).observe(stage);
+}
+
+/* ============================================================
+   ІНТЕРАКЦІЯ
+   ============================================================ */
+const pointers = new Map();
+let dragging = false;
+let dragOffset = { x: 0, y: 0 };
+let pinchStart = null;
+let hintHidden = false;
+
+function hideHint(){
+  if (hintHidden) return;
+  hintHidden = true;
+  const h = $("#hint");
+  if (h) h.classList.add("gone");
+}
+
+function localPoint(e){
+  const r = stage.getBoundingClientRect();
+  return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+stage.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  hideHint();
+  try { stage.setPointerCapture(e.pointerId); } catch(err){}
+  const p = localPoint(e);
+  pointers.set(e.pointerId, p);
+
+  const g = state.glass;
+
+  if (pointers.size === 1){
+    const inside = p.x > g.x - 26 && p.x < g.x + g.w + 26 &&
+                   p.y > g.y - 26 && p.y < g.y + g.h + 26;
+    if (inside){
+      dragOffset = { x: p.x - (g.x + g.w / 2), y: p.y - (g.y + g.h / 2) };
+    } else {
+      g.x = p.x - g.w / 2;
+      g.y = p.y - g.h / 2;
+      dragOffset = { x: 0, y: 0 };
+      clampGlass();
+    }
+    dragging = true;
+    pinchStart = null;
+  } else if (pointers.size === 2){
+    const pts = Array.from(pointers.values());
+    const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    pinchStart = { d: d || 1, w: g.w, h: g.h };
+    dragging = false;
+  }
+}, { passive: false });
+
+stage.addEventListener("pointermove", (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  e.preventDefault();
+  const p = localPoint(e);
+  pointers.set(e.pointerId, p);
+
+  if (pointers.size >= 2 && pinchStart){
+    const pts = Array.from(pointers.values());
+    const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    const k = clamp(d / pinchStart.d, 0.45, 2.6);
+    setGlassSize(pinchStart.w * k, pinchStart.h * k);
+    return;
+  }
+
+  if (dragging && pointers.size === 1){
+    const g = state.glass;
+    g.x = (p.x - dragOffset.x) - g.w / 2;
+    g.y = (p.y - dragOffset.y) - g.h / 2;
+    clampGlass();
+  }
+}, { passive: false });
+
+function releasePointer(e){
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchStart = null;
+  if (pointers.size === 0) dragging = false;
+}
+stage.addEventListener("pointerup", releasePointer);
+stage.addEventListener("pointercancel", releasePointer);
+stage.addEventListener("pointerleave", releasePointer);
+
+window.addEventListener("keydown", (e) => {
+  if (!labActive) return;
+  const g = state.glass;
+  const step = e.shiftKey ? 24 : 8;
+  let used = true;
+  switch (e.key){
+    case "ArrowLeft":  g.x -= step; break;
+    case "ArrowRight": g.x += step; break;
+    case "ArrowUp":    g.y -= step; break;
+    case "ArrowDown":  g.y += step; break;
+    case "+": case "=": setGlassSize(g.w * 1.08, g.h * 1.08); break;
+    case "-": case "_": setGlassSize(g.w * 0.92, g.h * 0.92); break;
+    default: used = false;
+  }
+  if (used){ e.preventDefault(); clampGlass(); hideHint(); }
+});
+
+/* ============================================================
+   КАМЕРА
+   ============================================================ */
+async function startCamera(){
+  if (cameraStarting) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast("Камера недоступна — працюємо в демо-режимі");
+    return false;
+  }
+  cameraStarting = true;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: "environment" },
+        width:  { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+
+    if (!video){
+      video = document.createElement("video");
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      video.muted = true;
+      video.autoplay = true;
+      video.playsInline = true;
+    }
+    video.srcObject = stream;
+    await video.play();
+
+    cameraStream = stream;
+    cameraReady = true;
+    state.source = "camera";
+    $("#pillSource").textContent = "КАМЕРА · AR";
+    $("#pillSource").classList.add("is-live");
+    $("#btnSource").textContent = "🚫 Демо";
+    toast("Камера увімкнена. Наведи на стрілку та рухай склянку!");
+    return true;
+  } catch (err){
+    cameraReady = false;
+    state.source = "demo";
+    $("#pillSource").textContent = "ДЕМО-СЦЕНА";
+    $("#pillSource").classList.remove("is-live");
+    $("#btnSource").textContent = "📷 Камера";
+    toast("Немає доступу до камери — працюємо в демо-режимі");
+    return false;
+  } finally {
+    cameraStarting = false;
+  }
+}
+
+function stopCamera(){
+  if (cameraStream){
+    cameraStream.getTracks().forEach(t => { try { t.stop(); } catch(e){} });
+  }
+  cameraStream = null;
+  cameraReady = false;
+  state.source = "demo";
+  $("#pillSource").textContent = "ДЕМО-СЦЕНА";
+  $("#pillSource").classList.remove("is-live");
+  $("#btnSource").textContent = "📷 Камера";
+}
+
+/* ============================================================
+   АНІМАЦІЯ ПОВЗУНКА
+   ============================================================ */
+let sliderAnimId = null;
+
+function animateSliderTo(target, duration){
+  if (sliderAnimId) cancelAnimationFrame(sliderAnimId);
+  const start = state.dist;
+  const t0 = performance.now();
+  duration = duration || 600;
+
+  function tick(now){
+    const k = clamp((now - t0) / duration, 0, 1);
+    const eased = 1 - Math.pow(1 - k, 3); // easeOutCubic
+    state.dist = start + (target - start) * eased;
+    distInput.value = String(state.dist);
+    if (k < 1){
+      sliderAnimId = requestAnimationFrame(tick);
+    } else {
+      sliderAnimId = null;
+    }
+  }
+  sliderAnimId = requestAnimationFrame(tick);
+}
+
+/* ============================================================
+   КЕРУВАННЯ ЛАБОРАТОРІЇ
+   ============================================================ */
+const distInput = $("#dist");
+distInput.value = String(state.dist);
+distInput.addEventListener("input", () => {
+  if (sliderAnimId){ cancelAnimationFrame(sliderAnimId); sliderAnimId = null; }
+  state.dist = parseFloat(distInput.value);
+  hideHint();
+});
+
+/* Кнопки "Порожня / З водою" з авто-переїздом повзунка */
+$$(".seg-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const willHaveWater = btn.dataset.water === "1";
+    const wasWater = state.water;
+    state.water = willHaveWater;
+    $$(".seg-btn").forEach(b => b.classList.toggle("is-on", b === btn));
+    uiCache = "";
+
+    if (willHaveWater){
+      // Якщо повзунок у зоні "до фокуса" — плавно переїжджаємо за фокус,
+      // щоб стрілка перевернулася на очах.
+      const d = sliderToDistance(state.dist);
+      if (d < FOCAL * 1.05){
+        animateSliderTo(DIST_AFTER, 700);
+        toast("Вода у склянці. Дивись — стрілка перевертається!");
+      } else {
+        lastSign = Math.sign(computeM());
+        toast("Вода у склянці — стрілка вказує ЛІВОРУЧ");
+      }
+    } else {
+      // Порожня склянка — повертаємо повзунок у зону "до фокуса",
+      // щоб показати, що без води перевороту немає.
+      animateSliderTo(DIST_BEFORE, 500);
+      toast("Склянка порожня — стрілка знову вказує ПРАВОРУЧ");
+    }
+
+    if (navigator.vibrate) { try { navigator.vibrate(18); } catch(e){} }
+  });
+});
+
+$("#btnSource").addEventListener("click", async () => {
+  if (state.source === "camera") {
+    stopCamera();
+    toast("Демо-сцена. Увімкни камеру, щоб бачити власний малюнок.");
+  } else {
+    await startCamera();
+  }
+});
+
+$("#btnShot").addEventListener("click", () => {
+  try {
+    const url = stage.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "evidence_" + Date.now() + ".png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast("📸 Знімок доказу збережено");
+  } catch (e){
+    toast("Не вдалося зробити знімок");
+  }
+});
+
+$("#btnSaveObs").addEventListener("click", () => {
+  const m = computeM();
+  const A = loadAnswers();
+  A.q1 = "right";
+  A.q2 = "no";
+  A.q3 = (state.water && m < 0) ? "left" : "right";
+  A.q4 = "distance";
+  saveAnswers(A);
+  renderAnswers(A);
+  toast("✅ Спостереження записано в Паспорт Детектива");
+});
+
+/* ============================================================
+   ПАСПОРТ
+   ============================================================ */
+const LS_ANSWERS = "eco_detective_answers_v1";
+const LS_PROFILE = "eco_detective_profile_v1";
+
+const LABELS = {
+  q1: { right: "ПРАВОРУЧ", left: "ЛІВОРУЧ" },
+  q2: { no: "НІ", yes: "ТАК" },
+  q3: { left: "ЛІВОРУЧ", right: "ПРАВОРУЧ" },
+  q4: { distance: "ВІДСТАНІ", speed: "ШВИДКОСТІ", color: "КОЛЬОРІ" },
+  q5: { refraction: "ЗАЛОМЛЕННЯ СВІТЛА", reflection: "ВІДБИТТЯ СВІТЛА", absorption: "ПОГЛИНАННЯ СВІТЛА" },
+  q6: { lens: "ВОДЯНА (ОПУКЛА) ЛІНЗА", mirror: "ПЛОСКЕ ДЗЕРКАЛО", prism: "ПРИЗМА" },
+  q7: { cross: "ПЕРЕХРЕЩЕННЯ ПРОМЕНІВ У ФОКУСІ", scatter: "РОЗСІЮВАННЯ ПРОМЕНІВ", tint: "ЗАБАРВЛЕННЯ СВІТЛА" }
+};
+
+const CORRECT = { q1:"right", q2:"no", q3:"left", q4:"distance", q5:"refraction", q6:"lens", q7:"cross" };
+
+function loadAnswers(){ return LS.get(LS_ANSWERS, {}); }
+function saveAnswers(a){ LS.set(LS_ANSWERS, a); }
+
+function renderAnswers(a){
+  $$(".opt").forEach(b => {
+    b.classList.toggle("is-sel", a[b.dataset.q] === b.dataset.v);
+  });
+}
+
+$$(".opt").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const a = loadAnswers();
+    a[btn.dataset.q] = btn.dataset.v;
+    saveAnswers(a);
+    $$('.opt[data-q="' + btn.dataset.q + '"]').forEach(o => {
+      o.classList.toggle("is-sel", o === btn);
+      o.classList.remove("is-hint");
+    });
+    if (navigator.vibrate) { try { navigator.vibrate(12); } catch(e){} }
+  });
+});
+
+["p_name", "p_partner"].forEach(id => {
+  const el = document.getElementById(id);
+  const prof = LS.get(LS_PROFILE, {});
+  if (prof[id]) el.value = prof[id];
+  el.addEventListener("input", () => {
+    const p = LS.get(LS_PROFILE, {});
+    p[id] = el.value;
+    LS.set(LS_PROFILE, p);
+  });
+});
+
+$("#btnAutofill").addEventListener("click", () => {
+  const m = computeM();
+  const a = loadAnswers();
+  a.q1 = "right";
+  a.q2 = "no";
+  a.q3 = (state.water && m < 0) ? "left" : "right";
+  a.q4 = "distance";
+  saveAnswers(a);
+  renderAnswers(a);
+  toast("🧪 Пункти 1–4 заповнено за результатами експерименту");
+});
+
+let hintOn = false;
+$("#btnHint").addEventListener("click", () => {
+  hintOn = !hintOn;
+  $$(".opt").forEach(b => {
+    b.classList.toggle("is-hint", hintOn && CORRECT[b.dataset.q] === b.dataset.v);
+  });
+  $("#btnHint").textContent = hintOn ? "🙈 Сховати підказку" : "💡 Підказка";
+  toast(hintOn ? "Жовта рамка — правильна відповідь" : "Підказку сховано");
+});
+
+$("#btnExport").addEventListener("click", () => {
+  const a = loadAnswers();
+  const prof = LS.get(LS_PROFILE, {});
+  const now = new Date();
+  const lines = [
+    "══════════════════════════════════════════",
+    "   ПАСПОРТ ДЕТЕКТИВА · СПРАВА №1",
+    "   «Справа про підмінені знаки»",
+    "══════════════════════════════════════════",
+    "",
+    "Детектив:  " + (prof.p_name || "—"),
+    "Напарник:  " + (prof.p_partner || "—"),
+    "Дата:      " + now.toLocaleDateString("uk-UA") + " " + now.toLocaleTimeString("uk-UA").slice(0, 5),
+    "",
+    "──────── ПРОТОКОЛ ────────",
+    "1. Оригінальний доказ вказує: " + (LABELS.q1[a.q1] || "—"),
+    "2. Порожня склянка змінює напрямок: " + (LABELS.q2[a.q2] || "—"),
+    "3. Крізь воду стрілка вказує: " + (LABELS.q3[a.q3] || "—"),
+    "4. Переворот відбувається на певній: " + (LABELS.q4[a.q4] || "—"),
+    "5. Злочинець (явище): " + (LABELS.q5[a.q5] || "—"),
+    "6. Знаряддя: " + (LABELS.q6[a.q6] || "—"),
+    "7. Механізм: " + (LABELS.q7[a.q7] || "—"),
+    "",
+    "──────── ВИСНОВОК ────────",
+    "Вода у круглій склянці працює як ОПУКЛА ЛІНЗА.",
+    "Промені світла заломлюються, перехрещуються у ФОКУСІ",
+    "і зображення перевертається: праве стає лівим.",
+    "",
+    "Статус: СТАРШИЙ СЛІДЧИЙ 🕵️",
+    "══════════════════════════════════════════"
+  ];
+  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "passport_detective.txt";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1200);
+  toast("⬇️ Паспорт збережено у файл");
+});
+
+$("#btnReset").addEventListener("click", () => {
+  if (!confirm("Очистити всі відповіді та дані детектива?")) return;
+  LS.del(LS_ANSWERS);
+  LS.del(LS_PROFILE);
+  LS.del("eco_detective_reflect_v1");
+  renderAnswers({});
+  $("#p_name").value = "";
+  $("#p_partner").value = "";
+  $$(".reflect-btn").forEach(b => b.classList.remove("is-sel"));
+  $("#reflectMsg").classList.remove("show");
+  $("#btnHint").textContent = "💡 Підказка";
+  hintOn = false;
+  toast("🗑️ Дані очищено");
+});
+
+/* ============================================================
+   ВИРОК / РЕФЛЕКСІЯ
+   ============================================================ */
+const LS_REFLECT = "eco_detective_reflect_v1";
+const REFLECT_MSG = {
+  green:  "🔦 <b>Зелений ліхтарик.</b> Чудово! Ти можеш пояснити іншим: вода працює як опукла лінза, промені перехрещуються у фокусі — і зображення перевертається. Спробуй пояснити це напарнику або вдома батькам.",
+  yellow: "🔦 <b>Жовтий ліхтарик.</b> Гарний результат! Фокус — це точка, де промені зустрічаються і перетинаються. Подивись ще раз на схему у вироку та порухай повзунок у лабораторії дуже повільно біля позначки «ФОКУС».",
+  red:    "🔦 <b>Червоний ліхтарик.</b> Це нормально — детективи теж іноді заходять у глухий кут. Попроси напарника ще раз показати крок 3: притисни папір до скла, а потім повільно відсувай. Момент перевороту — це і є фокус."
+};
+
+$$(".reflect-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const c = btn.dataset.c;
+    LS.set(LS_REFLECT, c);
+    $$(".reflect-btn").forEach(b => b.classList.toggle("is-sel", b === btn));
+    const box = $("#reflectMsg");
+    box.innerHTML = REFLECT_MSG[c] || "";
+    box.classList.add("show");
+    if (navigator.vibrate) { try { navigator.vibrate(20); } catch(e){} }
+  });
+});
+
+function refreshBadge(){
+  const prof = LS.get(LS_PROFILE, {});
+  const name = (prof.p_name || "").trim();
+  const badgeName = $("#badgeName");
+  const badgeSub  = $("#badgeSub");
+
+  if (name){
+    badgeName.textContent = "Старший слідчий " + name + "!";
+    badgeSub.textContent = "Справу про підмінені знаки успішно розкрито. Рівень доступу: 5+.";
+  } else {
+    badgeName.textContent = "Справу розкрито!";
+    badgeSub.textContent = "Впиши своє ім'я у «Паспорті Детектива» — і отримай іменний статус.";
+  }
+}
+
+/* ============================================================
+   ФІЗКУЛЬТХВИЛИНКА
+   ============================================================ */
+const WARMUP_STEPS = [
+  { e: "➡️", t: "Світло летить прямо!",                    s: "Витягни руки вперед і крокуй на місці" },
+  { e: "🔵", t: "На шляху перешкода — лінза!",             s: "Зроби велике коло руками над головою" },
+  { e: "❌", t: "Промені заломлюються і перехрещуються!",   s: "Схрести руки на грудях (літера Х) і присядь" },
+  { e: "🔄", t: "Зображення перевертається!",              s: "Підстрибни й повернись на 180°" }
+];
+
+let warmupTimer = null, warmupIdx = 0, warmupRound = 0;
+
+function renderWarmup(i){
+  const st = WARMUP_STEPS[i];
+  const box = $("#warmup");
+  box.innerHTML =
+    '<div class="emoji">' + st.e + '</div>' +
+    '<div class="cue">' + st.t + '</div>' +
+    '<div class="sub">' + st.s + '</div>';
+}
+
+$("#btnWarmup").addEventListener("click", () => {
+  const btn = $("#btnWarmup");
+  if (warmupTimer){
+    clearInterval(warmupTimer);
+    warmupTimer = null;
+    btn.textContent = "▶️ Почати розминку";
+    $("#warmup").innerHTML =
+      '<div class="emoji">🔍</div>' +
+      '<div class="cue">Розминку зупинено</div>' +
+      '<div class="sub">Натисни «Почати», щоб продовжити</div>';
+    return;
+  }
+  warmupIdx = 0; warmupRound = 0;
+  renderWarmup(0);
+  btn.textContent = "⏹️ Зупинити";
+  warmupTimer = setInterval(() => {
+    warmupIdx++;
+    if (warmupIdx >= WARMUP_STEPS.length){
+      warmupIdx = 0;
+      warmupRound++;
+      if (warmupRound >= 2){
+        clearInterval(warmupTimer);
+        warmupTimer = null;
+        btn.textContent = "▶️ Ще раз";
+        $("#warmup").innerHTML =
+          '<div class="emoji">🏅</div>' +
+          '<div class="cue">М\'язи розім\'ято!</div>' +
+          '<div class="sub">Тепер промені світла точно не заплутаються</div>';
+        return;
+      }
+    }
+    renderWarmup(warmupIdx);
+  }, 2800);
+});
+
+/* ============================================================
+   СТАРТ
+   ============================================================ */
+function init(){
+  renderAnswers(loadAnswers());
+
+  const refl = LS.get(LS_REFLECT, null);
+  if (refl){
+    const btn = $('.reflect-btn[data-c="' + refl + '"]');
+    if (btn){
+      btn.classList.add("is-sel");
+      const box = $("#reflectMsg");
+      box.innerHTML = REFLECT_MSG[refl] || "";
+      box.classList.add("show");
+    }
+  }
+
+  document.addEventListener("touchmove", (e) => {
+    if (e.target === stage) e.preventDefault();
+  }, { passive: false });
+
+  setTimeout(() => { if (!hintHidden) $("#hint").classList.add("gone"); }, 9000);
+
+  switchTab(location.hash.slice(1) || "start");
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden){
+      stopLoop();
+    } else if (labActive){
+      requestAnimationFrame(resizeStage);
+      startLoop();
+    }
+  });
+}
+
+init();
+
+})();
+</script>
 </body>
 </html>
