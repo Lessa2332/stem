@@ -3,279 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Справа про підмінені знаки | Еко-Детективи</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Водяна Лінза | Еко-Детективи</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .glass-lens {
-            box-shadow: inset 0 0 25px rgba(56, 189, 248, 0.5), 0 0 15px rgba(56, 189, 248, 0.3);
-            border: 3px solid rgba(186, 230, 253, 0.8);
+        :root {
+            --primary: #0ea5e9;
+            --bg-dark: #0f172a;
+            --text-light: #f8fafc;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh; /* For modern mobile browsers */
+        }
+        /* Header UI */
+        header {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 15px;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            z-index: 10;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        header h1 { font-size: 1.2rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); }
+        header p { font-size: 0.85rem; opacity: 0.8; }
+        
+        /* Main Canvas Setup */
+        #simulator-container {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        video { display: none; } /* Hidden video element for feed */
+
+        /* Controls UI */
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 0; right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            z-index: 10;
+            padding: 0 20px;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:hover { background: rgba(255, 255, 255, 0.2); }
+        button.primary { background: var(--primary); border-color: var(--primary); }
+        button.primary:hover { background: #0284c7; }
+
+        /* Loader */
+        #loader {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            z-index: 20;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between p-2 sm:p-4">
+<body>
 
-    <!-- Header -->
-    <header class="text-center py-2 border-b border-slate-700 bg-slate-900/80 rounded-xl mb-3 shadow-lg">
-        <div class="inline-block bg-amber-500 text-slate-950 font-black px-3 py-0.5 rounded-full text-xs uppercase tracking-wider mb-1">
-            Справа №108 • НУШ 5-6 клас
-        </div>
-        <h1 class="text-xl sm:text-2xl font-bold text-sky-400">🔍 Лабораторія Заломлення Світла</h1>
-        <p class="text-xs text-slate-400">Симулятор циліндричної водяної лінзи</p>
+    <header>
+        <h1>Слідчий апарат: Водяна Лінза</h1>
+        <p>Наведіть камеру на стрілку так, щоб вона опинилася всередині склянки</p>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col md:flex-row gap-4 max-w-6xl mx-auto w-full">
+    <div id="simulator-container">
+        <div id="loader">Запуск камери...</div>
+        <canvas id="lensCanvas"></canvas>
+        <video id="videoElement" autoplay playsinline></video>
+    </div>
 
-        <!-- Left Column: Lens Simulator -->
-        <section class="flex-1 bg-slate-900 rounded-2xl p-3 border border-slate-800 flex flex-col items-center justify-between">
-            
-            <div class="w-full flex justify-between items-center mb-2 px-1">
-                <span class="text-xs font-semibold text-slate-300 flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Симулятор Склянки
-                </span>
-                <button id="modeToggleBtn" onclick="toggleMode()" class="text-xs bg-sky-600 hover:bg-sky-500 text-white px-2.5 py-1 rounded-lg transition">
-                    Переключити на Віртуальний режим
-                </button>
-            </div>
+    <div class="controls">
+        <button id="switchBtn">🔄 Змінити камеру</button>
+        <button id="captureBtn" class="primary">📸 Доказ</button>
+    </div>
 
-            <!-- Viewport Canvas Container -->
-            <div class="relative w-full max-w-sm aspect-[3/4] bg-black rounded-xl overflow-hidden flex items-center justify-center shadow-inner border border-slate-800">
-                <video id="webcam" autoplay playsinline muted class="hidden"></video>
-                <canvas id="simCanvas" class="w-full h-full object-cover"></canvas>
-
-                <!-- Overlay Cylinder Glass Lens Indicator -->
-                <div id="lensOverlay" class="absolute inset-y-4 left-1/2 -translate-x-1/2 w-1/2 glass-lens rounded-3xl pointer-events-none flex flex-col justify-between items-center py-2">
-                    <span class="text-[10px] bg-sky-950/80 text-sky-300 px-2 py-0.5 rounded-full border border-sky-500/40">Водяна Лінза</span>
-                    <span class="text-[10px] text-sky-300/60 font-mono">ФОКУС</span>
-                </div>
-            </div>
-
-            <!-- Controls -->
-            <div class="w-full mt-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
-                <label class="flex justify-between text-xs font-medium text-slate-300 mb-1">
-                    <span>Відстань від склянки до об'єкта:</span>
-                    <span id="distValue" class="text-sky-400 font-bold">20 см</span>
-                </label>
-                <input id="distSlider" type="range" min="2" max="40" value="20" class="w-full accent-sky-400 cursor-pointer" oninput="updateDistance(this.value)">
-                <div class="flex justify-between text-[10px] text-slate-500 mt-1">
-                    <span>Впритул (2 см)</span>
-                    <span class="text-amber-400">Фокус (~10 см)</span>
-                    <span>Далеко (40 см)</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Right Column: Detective Passport & Quiz -->
-        <section class="flex-1 bg-slate-900 rounded-2xl p-4 border border-slate-800 flex flex-col justify-between">
-            <div>
-                <h2 class="text-lg font-bold text-amber-400 mb-2 flex items-center gap-2">
-                    📋 Паспорт Детектива
-                </h2>
-                <p class="text-xs text-slate-400 mb-4">Фіксуйте результати слідчого експерименту під час уроку:</p>
-
-                <form id="passportForm" class="space-y-3 text-xs">
-                    <div>
-                        <label class="block text-slate-300 mb-1">1. Порожня склянка перевертає знак?</label>
-                        <select id="q1" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200 focus:border-sky-400 outline-none">
-                            <option value="">-- Оберіть відповідь --</option>
-                            <option value="no">Ні, скло не змінює напрямок</option>
-                            <option value="yes">Так, перевертає одразу</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-slate-300 mb-1">2. Що відбувається зі стрілкою за склянкою з водою на відстані 20 см?</label>
-                        <select id="q2" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200 focus:border-sky-400 outline-none">
-                            <option value="">-- Оберіть відповідь --</option>
-                            <option value="straight">Вказує так само (Праворуч)</option>
-                            <option value="flipped">Змінює напрямок (Ліворуч)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-slate-300 mb-1">3. Причиною «злочину» є:</label>
-                        <select id="q3" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-200 focus:border-sky-400 outline-none">
-                            <option value="">-- Оберіть винуватця --</option>
-                            <option value="magic">Магія і чари</option>
-                            <option value="refraction">Заломлення світла (Опукла водяна лінза)</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-
-            <div class="mt-4 pt-3 border-t border-slate-800">
-                <button onclick="checkAnswers()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-2.5 px-4 rounded-xl shadow-lg transition">
-                    🏆 Закрити справу та отримати статус
-                </button>
-                <div id="resultBox" class="hidden mt-3 p-3 bg-emerald-950/80 border border-emerald-500/50 rounded-xl text-center">
-                    <p class="text-sm font-bold text-emerald-300">🎉 Вітаємо, Старший Слідчий!</p>
-                    <p class="text-xs text-emerald-200 mt-1">Справу про підмінені знаки успішно розкрито!</p>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="text-center py-2 text-[11px] text-slate-500 mt-2">
-        Інтерактивний додаток НУШ • 2026 • Лабораторія Фізики
-    </footer>
-
-    <!-- JavaScript Logic -->
     <script>
-        const canvas = document.getElementById('simCanvas');
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('lensCanvas');
         const ctx = canvas.getContext('2d');
-        const video = document.getElementById('webcam');
-        const distSlider = document.getElementById('distSlider');
-        const distValue = document.getElementById('distValue');
+        const switchBtn = document.getElementById('switchBtn');
+        const captureBtn = document.getElementById('captureBtn');
+        const loader = document.getElementById('loader');
 
-        let isCameraMode = true;
-        let distance = 20; // cm
-        const focusPoint = 10; // cm
+        let currentStream = null;
+        let useFrontCamera = false;
 
-        // Set Canvas dimensions
-        canvas.width = 360;
-        canvas.height = 480;
+        // Initialize Camera
+        async function startCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
 
-        // Start App
-        initCamera();
+            const constraints = {
+                video: {
+                    facingMode: useFrontCamera ? "user" : "environment",
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            };
 
-        async function initCamera() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
-                    audio: false
-                });
-                video.srcObject = stream;
-                video.play();
-                isCameraMode = true;
-                requestAnimationFrame(renderLoop);
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+                video.onloadedmetadata = () => {
+                    video.play();
+                    loader.style.display = 'none';
+                    requestAnimationFrame(drawSimulator);
+                };
             } catch (err) {
-                console.warn("Camera inaccessible, switching to virtual mode", err);
-                isCameraMode = false;
-                document.getElementById('modeToggleBtn').innerText = "Камеру не знайдено (Віртуальний режим)";
-                requestAnimationFrame(renderLoop);
+                console.error("Помилка доступу до камери:", err);
+                loader.innerHTML = "⚠️ Надайте дозвіл на використання камери";
             }
         }
 
-        function toggleMode() {
-            isCameraMode = !isCameraMode;
-            const btn = document.getElementById('modeToggleBtn');
-            if (isCameraMode) {
-                btn.innerText = "Переключити на Віртуальний режим";
-                initCamera();
-            } else {
-                btn.innerText = "Увімкнути реальну Камеру";
-                if(video.srcObject) {
-                    video.srcObject.getTracks().forEach(track => track.stop());
+        // Main Render Loop
+        function drawSimulator() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                // Set canvas size to match screen
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
+                // 1. Calculate aspect ratio to "cover" the screen (like object-fit: cover)
+                const scale = Math.max(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
+                const vidWidth = video.videoWidth * scale;
+                const vidHeight = video.videoHeight * scale;
+                const vidX = (canvas.width - vidWidth) / 2;
+                const vidY = (canvas.height - vidHeight) / 2;
+
+                // 2. Draw normal background (blurry/darkened slightly to emphasize the glass)
+                ctx.globalAlpha = 0.6;
+                // If using front camera, mirror the background for natural feel
+                if (useFrontCamera) {
+                    ctx.save();
+                    ctx.translate(canvas.width, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(video, canvas.width - vidX - vidWidth, vidY, vidWidth, vidHeight);
+                    ctx.restore();
+                } else {
+                    ctx.drawImage(video, vidX, vidY, vidWidth, vidHeight);
                 }
-            }
-        }
+                ctx.globalAlpha = 1.0;
 
-        function updateDistance(val) {
-            distance = parseInt(val);
-            distValue.innerText = `${distance} см`;
-        }
+                // 3. Define the "Glass of Water" dimensions
+                const glassWidth = Math.min(canvas.width * 0.45, 300);
+                const glassHeight = Math.min(canvas.height * 0.6, 500);
+                const glassX = (canvas.width - glassWidth) / 2;
+                const glassY = (canvas.height - glassHeight) / 2;
+                const cornerRadius = 15;
 
-        function renderLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            if (isCameraMode && video.readyState === video.HAVE_ENOUGH_DATA) {
-                // Draw background video
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            } else {
-                // Draw Virtual Background (Paper with Red Arrow)
-                ctx.fillStyle = "#f8fafc";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                // Grid pattern on paper
-                ctx.strokeStyle = "#e2e8f0";
-                ctx.lineWidth = 1;
-                for(let x=0; x<canvas.width; x+=20) {
-                    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x, canvas.height); ctx.stroke();
-                }
-                for(let y=0; y<canvas.height; y+=20) {
-                    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width, y); ctx.stroke();
-                }
-
-                // Draw Original Arrow pointing RIGHT ➔
-                ctx.fillStyle = "#ef4444";
+                // 4. Create Clipping Path for the Glass
+                ctx.save();
                 ctx.beginPath();
-                ctx.moveTo(80, 220);
-                ctx.lineTo(220, 220);
-                ctx.lineTo(220, 190);
-                ctx.lineTo(280, 240);
-                ctx.lineTo(220, 290);
-                ctx.lineTo(220, 260);
-                ctx.lineTo(80, 260);
-                ctx.closePath();
-                ctx.fill();
+                ctx.roundRect(glassX, glassY, glassWidth, glassHeight, cornerRadius);
+                ctx.clip();
 
-                // Text
-                ctx.fillStyle = "#0f172a";
-                ctx.font = "bold 16px sans-serif";
-                ctx.fillText("ДОКАЗ: ПРАВОРУЧ ➔", 90, 160);
-            }
-
-            // Apply Optical Refraction inside the Glass Lens Cylinder zone
-            applyGlassRefraction();
-
-            requestAnimationFrame(renderLoop);
-        }
-
-        function applyGlassRefraction() {
-            const glassWidth = canvas.width * 0.5;
-            const glassLeft = (canvas.width - glassWidth) / 2;
-            const glassTop = 16;
-            const glassHeight = canvas.height - 32;
-
-            // Capture ImageData from the glass zone
-            const imgData = ctx.getImageData(glassLeft, glassTop, glassWidth, glassHeight);
-            const sourcePixels = new Uint8ClampedArray(imgData.data);
-            const targetData = imgData.data;
-
-            const isFlipped = distance > focusPoint;
-
-            for (let y = 0; y < glassHeight; y++) {
-                for (let x = 0; x < glassWidth; x++) {
-                    let srcX = x;
-
-                    if (isFlipped) {
-                        // Reverse horizontal pixels inside the cylinder lens
-                        srcX = glassWidth - 1 - x;
-                    }
-
-                    // Optical distortion curvature calculation
-                    const normX = (x / glassWidth) - 0.5; // -0.5 to 0.5
-                    const sphereFactor = Math.cos(normX * Math.PI * 0.8);
-
-                    const targetIdx = (y * glassWidth + x) * 4;
-                    const srcIdx = (y * glassWidth + srcX) * 4;
-
-                    targetData[targetIdx]     = sourcePixels[srcIdx];     // Red
-                    targetData[targetIdx + 1] = sourcePixels[srcIdx + 1]; // Green
-                    targetData[targetIdx + 2] = sourcePixels[srcIdx + 2]; // Blue
-                    targetData[targetIdx + 3] = sourcePixels[srcIdx + 3]; // Alpha
+                // 5. Draw the FLIPPED video inside the glass (The Physics Magic)
+                // Water acts as a convex lens, flipping the image horizontally
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+                
+                // Calculate correct X position for flipped coordinate system
+                const flippedVidX = canvas.width - vidX - vidWidth;
+                
+                // If front camera is used, double flip makes it normal, so we just draw normal inside the glass
+                // To keep the "experiment" working, front camera background is mirrored, glass is unmirrored.
+                if(useFrontCamera) {
+                    ctx.scale(-1, 1);
+                    ctx.translate(-canvas.width, 0);
+                    ctx.drawImage(video, vidX, vidY, vidWidth, vidHeight);
+                } else {
+                    ctx.drawImage(video, flippedVidX, vidY, vidWidth, vidHeight);
                 }
-            }
+                
+                // Add water tint
+                ctx.fillStyle = 'rgba(14, 165, 233, 0.15)'; // Cyan tint
+                ctx.fill();
+                ctx.restore();
 
-            // Put modified refracted image back
-            ctx.putImageData(imgData, glassLeft, glassTop);
+                // 6. Draw Glass UI (Borders and glare)
+                ctx.beginPath();
+                ctx.roundRect(glassX, glassY, glassWidth, glassHeight, cornerRadius);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Left Glare
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(glassX + 10, glassY + 20, 4, glassHeight - 40);
+                // Right Glare
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.fillRect(glassX + glassWidth - 15, glassY + 20, 2, glassHeight - 40);
+            }
+            requestAnimationFrame(drawSimulator);
         }
 
-        function checkAnswers() {
-            const q1 = document.getElementById('q1').value;
-            const q2 = document.getElementById('q2').value;
-            const q3 = document.getElementById('q3').value;
+        // Event Listeners
+        switchBtn.addEventListener('click', () => {
+            useFrontCamera = !useFrontCamera;
+            startCamera();
+        });
 
-            if (q1 === 'no' && q2 === 'flipped' && q3 === 'refraction') {
-                document.getElementById('resultBox').classList.remove('hidden');
-            } else {
-                alert('🔍 Деякі докази вивчено некоректно. Перевірте результати експерименту ще раз!');
-            }
-        }
+        captureBtn.addEventListener('click', () => {
+            // Flash effect
+            const flash = document.createElement('div');
+            flash.style.position = 'absolute';
+            flash.style.top = '0'; flash.style.left = '0';
+            flash.style.width = '100%'; flash.style.height = '100%';
+            flash.style.background = 'white';
+            flash.style.zIndex = '100';
+            flash.style.transition = 'opacity 0.5s';
+            document.body.appendChild(flash);
+            
+            setTimeout(() => { flash.style.opacity = '0'; }, 100);
+            setTimeout(() => { document.body.removeChild(flash); }, 600);
+
+            // Download Image
+            const link = document.createElement('a');
+            link.download = 'Доказ_Водяна_Лінза.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        // Start
+        window.addEventListener('load', startCamera);
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
     </script>
 </body>
 </html>
