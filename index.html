@@ -29,7 +29,7 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--dark-bg);
-    background-image: 
+    background-image:
       radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.3) 0%, transparent 60%),
       radial-gradient(circle at 10% 90%, rgba(255, 107, 0, 0.15) 0%, transparent 50%);
     color: var(--text-light);
@@ -50,37 +50,30 @@
   /* === АНІМОВАНА ПАВУТИНА НА ФОНІ === */
   .bg-web {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     pointer-events: none;
     z-index: 0;
     opacity: 0.4;
   }
-  
   .bg-web svg {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     animation: webPulse 8s ease-in-out infinite alternate;
   }
-
   @keyframes webPulse {
-    0% { transform: scale(1) rotate(0deg); opacity: 0.4; }
+    0%   { transform: scale(1) rotate(0deg); opacity: 0.4; }
     100% { transform: scale(1.05) rotate(2deg); opacity: 0.6; }
   }
 
   /* === ПАВУЧОК === */
   .spider {
     position: absolute;
-    width: 50px;
-    height: 50px;
+    width: 50px; height: 50px;
     z-index: 10;
     pointer-events: none;
     filter: drop-shadow(0 0 8px rgba(163, 230, 53, 0.6));
     animation: spiderWalk 12s ease-in-out infinite;
   }
-
   @keyframes spiderWalk {
     0%   { top: -60px; left: 10%; transform: rotate(0deg); }
     15%  { top: 20%; left: 80%; transform: rotate(45deg); }
@@ -175,6 +168,16 @@
     text-shadow: 0 0 20px rgba(255, 107, 0, 0.8);
   }
 
+  .result-box.fail {
+    border-color: #ef4444;
+    background: #1a0a10;
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.5);
+  }
+  .result-box.fail .result-text {
+    color: #f87171;
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.7);
+  }
+
   @keyframes pop {
     0% { transform: scale(0.8); }
     50% { transform: scale(1.05); }
@@ -198,17 +201,13 @@
     gap: 8px;
     min-height: 60px;
   }
-
-  .btn:active {
-    transform: scale(0.96);
-  }
+  .btn:active { transform: scale(0.96); }
 
   .btn-spin {
     background: linear-gradient(135deg, var(--purple), #6d28d9);
     color: #fff;
     box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
   }
-
   .btn-spin:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -223,6 +222,17 @@
     margin-top: 12px;
   }
 
+  .btn-reset {
+    background: transparent;
+    color: #6b7280;
+    font-size: 0.75rem;
+    min-height: 36px;
+    padding: 8px;
+    margin-top: 8px;
+    box-shadow: none;
+    text-decoration: underline;
+  }
+
   /* Кажани на фоні */
   .bat {
     position: absolute;
@@ -231,11 +241,10 @@
     z-index: 1;
     animation: fly 8s linear infinite;
   }
-  
   @keyframes fly {
-    0% { transform: translate(-10vw, 20vh) rotate(0deg); opacity: 0; }
-    10% { opacity: 0.8; }
-    90% { opacity: 0.8; }
+    0%   { transform: translate(-10vw, 20vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.8; }
+    90%  { opacity: 0.8; }
     100% { transform: translate(110vw, 10vh) rotate(45deg); opacity: 0; }
   }
 
@@ -295,7 +304,7 @@
   <!-- Основна картка -->
   <div class="fate-card">
     <h1 class="title">🎃 Доля обирає</h1>
-    <div class="counter-badge" id="counterBadge">Залишилось місць: 30 / 30</div>
+    <div class="counter-badge" id="counterBadge">Спроба №1</div>
     <p class="subtitle">Натисни, щоб дізнатися свою групу</p>
 
     <div class="result-box" id="resultBox">
@@ -310,44 +319,66 @@
     <button class="btn btn-next" id="nextBtn" type="button">
       <span>Зафіксувати результат →</span>
     </button>
+
+    <button class="btn btn-reset" id="resetBtn" type="button">
+      Скинути прогрес
+    </button>
   </div>
 
 <script>
-  // Тільки дві групи на вибір
+  // ==== НАЛАШТУВАННЯ ====
   const BASE_GROUPS = [
     "Реакційні пані",
     "Містичні молекули"
   ];
+  const FAIL_TEXT = "Доля ще не вирішила. Спробуй ще 🕸️";
+  const FAIL_EVERY = 5; // кожен 5-й спін — "Доля не вирішила"
 
-  const TOTAL_SLOTS = 30;
-  
-  // Генеруємо масив із рівно 30 елементів (порівну на дві групи + трохи "Доля ще не вирішила")
-  function generatePool() {
-    let pool = [];
-    
-    for(let i = 0; i < TOTAL_SLOTS; i++) {
-      // Приблизно кожна 5-та спроба видаватиме жартівливий варіант
-      if (Math.random() < 0.2 && pool.length < 27) {
-        pool.push("Доля ще не вирішила. Спробуй ще 🕸️");
-      } else {
-        // Чергуємо групи порівну
-        let group = BASE_GROUPS[i % BASE_GROUPS.length];
-        pool.push(group);
-      }
-    }
-    // Фінальне перемішування пулу
-    return pool.sort(() => Math.random() - 0.5);
+  // ==== СТАН (зберігається в localStorage) ====
+  // attemptCount — скільки всього спроб (включно з невдалими)
+  // groupToggle — лічильник для чергування груп
+  let attemptCount = parseInt(localStorage.getItem('fate_attempt_v3') || '0', 10);
+  let groupToggle = parseInt(localStorage.getItem('fate_group_v3') || '0', 10);
+
+  function saveState() {
+    localStorage.setItem('fate_attempt_v3', attemptCount);
+    localStorage.setItem('fate_group_v3', groupToggle);
   }
 
-  let remainingPool = JSON.parse(localStorage.getItem('fate_pool_v2')) || generatePool();
-  let currentAssigned = null;
+  // ==== ВИЗНАЧЕННЯ РЕЗУЛЬТАТУ ====
+  function nextResult() {
+    attemptCount++;
+
+    // Кожен 5-й раз — гарантовано "Доля не вирішила"
+    if (attemptCount % FAIL_EVERY === 0) {
+      saveState();
+      return { text: FAIL_TEXT, isFail: true };
+    }
+
+    // Інакше — чергуємо групи порівну
+    const group = BASE_GROUPS[groupToggle % BASE_GROUPS.length];
+    groupToggle++;
+    saveState();
+    return { text: group, isFail: false };
+  }
+
+  // ==== UI ====
+  const resultBox = document.getElementById('resultBox');
+  const resultText = document.getElementById('resultText');
+  const spinBtn = document.getElementById('spinBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const counterBadge = document.getElementById('counterBadge');
 
   function updateCounter() {
-    const badge = document.getElementById('counterBadge');
-    badge.textContent = `Залишилось місць: ${remainingPool.length} / ${TOTAL_SLOTS}`;
+    const currentAttempt = attemptCount; // скільки вже зроблено
+    const nextFailIn = FAIL_EVERY - (currentAttempt % FAIL_EVERY);
+    counterBadge.textContent =
+      `Спроба №${currentAttempt + 1} · до «Доля не вирішила»: ${nextFailIn}`;
   }
   updateCounter();
 
+  // ==== ЗВУКИ ====
   let isSpinning = false;
   let spinInterval = null;
   let audioCtx = null;
@@ -401,84 +432,89 @@
     } catch(e) {}
   }
 
-  const resultBox = document.getElementById('resultBox');
-  const resultText = document.getElementById('resultText');
-  const spinBtn = document.getElementById('spinBtn');
-  const nextBtn = document.getElementById('nextBtn');
-
+  // ==== СПІН ====
   function spinFate() {
     if (isSpinning) return;
-    
-    if (remainingPool.length === 0) {
-      alert("Всі 30 місць уже зайняті! Доля завершила вибір.");
-      return;
-    }
 
     initAudio();
     isSpinning = true;
-    
-    resultBox.classList.remove('winner');
+
+    resultBox.classList.remove('winner', 'fail');
     resultBox.classList.add('spinning');
     spinBtn.disabled = true;
     nextBtn.style.display = 'none';
 
-    let spinCount = 0;
-    const maxSpins = 25; 
+    // Визначаємо результат ЗАЗДАЛЕГІДЬ — детерміновано
+    const result = nextResult();
 
-    currentAssigned = remainingPool.pop();
+    let spinCount = 0;
+    const maxSpins = 25;
 
     spinInterval = setInterval(() => {
       const randomGroup = BASE_GROUPS[Math.floor(Math.random() * BASE_GROUPS.length)];
       resultText.textContent = randomGroup;
       playTickSound();
-      
+
       spinCount++;
       if (spinCount >= maxSpins) {
         clearInterval(spinInterval);
-        finishSpin(currentAssigned);
+        finishSpin(result);
       }
     }, 80);
   }
 
-  function finishSpin(winner) {
+  function finishSpin(result) {
     isSpinning = false;
-    
+
     resultBox.classList.remove('spinning');
     resultBox.classList.add('winner');
-    resultText.textContent = winner;
-    
-    const isFail = winner.includes("Доля ще не вирішила");
-    playWinSound(isFail);
-    
+    resultText.textContent = result.text;
+
+    playWinSound(result.isFail);
     if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 150]);
-    
-    if (isFail) {
-      remainingPool.push(winner);
-      remainingPool.sort(() => Math.random() - 0.5);
+
+    if (result.isFail) {
+      resultBox.classList.add('fail');
+      // Показуємо "Спробувати знову" — хід НЕ зафіксовано
       spinBtn.disabled = false;
       spinBtn.querySelector('span').textContent = 'Спробувати знову';
+      nextBtn.style.display = 'none';
     } else {
-      localStorage.setItem('fate_pool_v2', JSON.stringify(remainingPool));
+      // Успіх — можна зафіксувати
       spinBtn.disabled = true;
+      spinBtn.querySelector('span').textContent = 'Крутити долю';
       nextBtn.style.display = 'flex';
     }
     updateCounter();
   }
 
+  // ==== ОБРОБНИКИ ====
   spinBtn.addEventListener('click', spinFate);
-  
+
   nextBtn.addEventListener('click', () => {
-    alert('Ваш результат зафіксовано: ' + resultText.textContent + '\nПередайте пристрій наступному учаснику!');
-    resultBox.classList.remove('winner');
+    alert(
+      'Ваш результат зафіксовано: ' + resultText.textContent +
+      '\nПередайте пристрій наступному учаснику!'
+    );
+    resultBox.classList.remove('winner', 'fail');
     resultText.textContent = '???';
     spinBtn.disabled = false;
     spinBtn.querySelector('span').textContent = 'Крутити долю';
     nextBtn.style.display = 'none';
-    
-    if(remainingPool.length === 0) {
-      spinBtn.disabled = true;
-      resultText.textContent = 'Всі місця зайняті!';
-    }
+    updateCounter();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (!confirm('Скинути весь прогрес? Лічильник спроб і чергування груп обнуляться.')) return;
+    attemptCount = 0;
+    groupToggle = 0;
+    saveState();
+    resultBox.classList.remove('winner', 'fail', 'spinning');
+    resultText.textContent = '???';
+    spinBtn.disabled = false;
+    spinBtn.querySelector('span').textContent = 'Крутити долю';
+    nextBtn.style.display = 'none';
+    updateCounter();
   });
 </script>
 </body>
