@@ -313,47 +313,33 @@
   </div>
 
 <script>
-  // Базові назви груп (список розраховано так, щоб вистачило на 30 осіб з урахуванням повторень)
+  // Тільки дві групи на вибір
   const BASE_GROUPS = [
-    "Кислотні гарбузи",
-    "Містичні молекули",
-    "Алхіміки темряви",
-    "Реакція на страх",
-    "Привиди колби",
-    "Чаклунки Менделєєва",
-    "Хімічний апокаліпсис",
-    "Без реакції не залишимо!",
-    "Валентні відьми",
-    "Несумісні сполуки",
-    "Каталізатори жаху",
-    "Небезпечні елементи",
-    "Формула переляку"
+    "Реактивні пані",
+    "Містичні молекули"
   ];
 
   const TOTAL_SLOTS = 30;
   
-  // Генеруємо заздалегідь масив із рівно 30 елементів, випадково розподіляючи групи + додаючи "хибні" спроби
+  // Генеруємо масив із рівно 30 елементів (порівну на дві групи + трохи "Доля ще не вирішила")
   function generatePool() {
     let pool = [];
-    // Додаємо кожну групу щонайменше один раз (щоб точно всім дісталося)
-    let shuffledBase = [...BASE_GROUPS].sort(() => Math.random() - 0.5);
     
     for(let i = 0; i < TOTAL_SLOTS; i++) {
-      // Кожна 5-та спроба може бути "Доля ще не вирішила" (приблизно 20ї шанси)
-      if (Math.random() < 0.2 && pool.length < 28) {
+      // Приблизно кожна 5-та спроба видаватиме жартівливий варіант
+      if (Math.random() < 0.2 && pool.length < 27) {
         pool.push("Доля ще не вирішила. Спробуй ще 🕸️");
       } else {
-        // Беремо по черзі з перемішаного базового списку або дублюємо з рандомом
-        let group = shuffledBase[i % shuffledBase.length];
+        // Чергуємо групи порівну
+        let group = BASE_GROUPS[i % BASE_GROUPS.length];
         pool.push(group);
       }
     }
-    // Фінальне перемішування пулу для уникнення закономірностей
+    // Фінальне перемішування пулу
     return pool.sort(() => Math.random() - 0.5);
   }
 
-  // Завантажуємо пул з пам'яті або створюємо новий для цілої групи з 30 осіб
-  let remainingPool = JSON.parse(localStorage.getItem('fate_pool')) || generatePool();
+  let remainingPool = JSON.parse(localStorage.getItem('fate_pool_v2')) || generatePool();
   let currentAssigned = null;
 
   function updateCounter() {
@@ -439,11 +425,9 @@
     let spinCount = 0;
     const maxSpins = 25; 
 
-    // Витягуємо поточний елемент з пулу
     currentAssigned = remainingPool.pop();
 
     spinInterval = setInterval(() => {
-      // Показуємо випадкові назви під час крутіння
       const randomGroup = BASE_GROUPS[Math.floor(Math.random() * BASE_GROUPS.length)];
       resultText.textContent = randomGroup;
       playTickSound();
@@ -468,16 +452,14 @@
     
     if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 150]);
     
-    // Якщо випало «Спробуй ще», повертаємо цей шанс назад у пул, щоб учасник зміг спробувати знову
     if (isFail) {
       remainingPool.push(winner);
-      remainingPool.sort(() => Math.random() - 0.5); // знову перемішуємо
+      remainingPool.sort(() => Math.random() - 0.5);
       spinBtn.disabled = false;
       spinBtn.querySelector('span').textContent = 'Спробувати знову';
     } else {
-      // Зберігаємо залишок пулу в пам'яті браузера
-      localStorage.setItem('fate_pool', JSON.stringify(remainingPool));
-      spinBtn.disabled = true; // Блокуємо, щоб людина забрала результат
+      localStorage.setItem('fate_pool_v2', JSON.stringify(remainingPool));
+      spinBtn.disabled = true;
       nextBtn.style.display = 'flex';
     }
     updateCounter();
@@ -487,7 +469,6 @@
   
   nextBtn.addEventListener('click', () => {
     alert('Ваш результат зафіксовано: ' + resultText.textContent + '\nПередайте пристрій наступному учаснику!');
-    // Очищаємо екран для наступного
     resultBox.classList.remove('winner');
     resultText.textContent = '???';
     spinBtn.disabled = false;
