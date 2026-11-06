@@ -172,6 +172,7 @@
     border-color: #ef4444;
     background: #1a0a10;
     box-shadow: 0 0 40px rgba(239, 68, 68, 0.5);
+    animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
   .result-box.fail .result-text {
     color: #f87171;
@@ -184,7 +185,7 @@
     100% { transform: scale(1); }
   }
 
-  /* === КНОПКИ === */
+  /* === КНОПКА === */
   .btn {
     width: 100%;
     padding: 18px;
@@ -214,14 +215,6 @@
     transform: none;
   }
 
-  .btn-next {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #fff;
-    box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
-    display: none;
-    margin-top: 12px;
-  }
-
   .btn-reset {
     background: transparent;
     color: #6b7280;
@@ -249,7 +242,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .spider, .bg-web svg, .bat, .result-box.winner {
+    .spider, .bg-web svg, .bat, .result-box.winner, .result-box.fail {
       animation: none !important;
     }
     .spider { top: 10%; left: 80%; }
@@ -316,10 +309,6 @@
       <span style="font-size:1.3rem">🎰</span>
     </button>
 
-    <button class="btn btn-next" id="nextBtn" type="button">
-      <span>Зафіксувати результат →</span>
-    </button>
-
     <button class="btn btn-reset" id="resetBtn" type="button">
       Скинути прогрес
     </button>
@@ -335,14 +324,12 @@
   const FAIL_EVERY = 5; // кожен 5-й спін — "Доля не вирішила"
 
   // ==== СТАН (зберігається в localStorage) ====
-  // attemptCount — скільки всього спроб (включно з невдалими)
-  // groupToggle — лічильник для чергування груп
-  let attemptCount = parseInt(localStorage.getItem('fate_attempt_v3') || '0', 10);
-  let groupToggle = parseInt(localStorage.getItem('fate_group_v3') || '0', 10);
+  let attemptCount = parseInt(localStorage.getItem('fate_attempt_v4') || '0', 10);
+  let groupToggle = parseInt(localStorage.getItem('fate_group_v4') || '0', 10);
 
   function saveState() {
-    localStorage.setItem('fate_attempt_v3', attemptCount);
-    localStorage.setItem('fate_group_v3', groupToggle);
+    localStorage.setItem('fate_attempt_v4', attemptCount);
+    localStorage.setItem('fate_group_v4', groupToggle);
   }
 
   // ==== ВИЗНАЧЕННЯ РЕЗУЛЬТАТУ ====
@@ -366,15 +353,13 @@
   const resultBox = document.getElementById('resultBox');
   const resultText = document.getElementById('resultText');
   const spinBtn = document.getElementById('spinBtn');
-  const nextBtn = document.getElementById('nextBtn');
   const resetBtn = document.getElementById('resetBtn');
   const counterBadge = document.getElementById('counterBadge');
 
   function updateCounter() {
-    const currentAttempt = attemptCount; // скільки вже зроблено
-    const nextFailIn = FAIL_EVERY - (currentAttempt % FAIL_EVERY);
+    const nextFailIn = FAIL_EVERY - (attemptCount % FAIL_EVERY);
     counterBadge.textContent =
-      `Спроба №${currentAttempt + 1} · до «Доля не вирішила»: ${nextFailIn}`;
+      `Спроба №${attemptCount + 1} · до «Доля не вирішила»: ${nextFailIn}`;
   }
   updateCounter();
 
@@ -442,7 +427,6 @@
     resultBox.classList.remove('winner', 'fail');
     resultBox.classList.add('spinning');
     spinBtn.disabled = true;
-    nextBtn.style.display = 'none';
 
     // Визначаємо результат ЗАЗДАЛЕГІДЬ — детерміновано
     const result = nextResult();
@@ -475,34 +459,18 @@
 
     if (result.isFail) {
       resultBox.classList.add('fail');
-      // Показуємо "Спробувати знову" — хід НЕ зафіксовано
-      spinBtn.disabled = false;
       spinBtn.querySelector('span').textContent = 'Спробувати знову';
-      nextBtn.style.display = 'none';
     } else {
-      // Успіх — можна зафіксувати
-      spinBtn.disabled = true;
       spinBtn.querySelector('span').textContent = 'Крутити долю';
-      nextBtn.style.display = 'flex';
     }
+
+    // Кнопка завжди доступна — можна крутити далі
+    spinBtn.disabled = false;
     updateCounter();
   }
 
   // ==== ОБРОБНИКИ ====
   spinBtn.addEventListener('click', spinFate);
-
-  nextBtn.addEventListener('click', () => {
-    alert(
-      'Ваш результат зафіксовано: ' + resultText.textContent +
-      '\nПередайте пристрій наступному учаснику!'
-    );
-    resultBox.classList.remove('winner', 'fail');
-    resultText.textContent = '???';
-    spinBtn.disabled = false;
-    spinBtn.querySelector('span').textContent = 'Крутити долю';
-    nextBtn.style.display = 'none';
-    updateCounter();
-  });
 
   resetBtn.addEventListener('click', () => {
     if (!confirm('Скинути весь прогрес? Лічильник спроб і чергування груп обнуляться.')) return;
@@ -513,7 +481,6 @@
     resultText.textContent = '???';
     spinBtn.disabled = false;
     spinBtn.querySelector('span').textContent = 'Крутити долю';
-    nextBtn.style.display = 'none';
     updateCounter();
   });
 </script>
